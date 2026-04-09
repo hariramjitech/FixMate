@@ -1,0 +1,310 @@
+BUSINESS REQUIREMENTS DOCUMENT (BDR)
+1. Business Overview
+
+The project aims to build an on-demand home service platform similar to Urban Company that connects customers with nearby service professionals such as cleaners, electricians, plumbers, and appliance repair technicians.
+
+The platform will allow customers to quickly find reliable workers, get price estimates, book services, track service progress, and pay securely.
+
+Service providers will be able to receive service requests, manage their bookings, and track earnings.
+
+Administrators will manage the platform by approving workers, monitoring bookings, resolving issues, and analyzing system performance.
+
+The system will be developed using the MERN stack (MongoDB, Express, React, Node.js).
+
+2. Business Objectives
+
+The main objectives of the system are:
+
+• Provide a fast and reliable platform for booking home services.
+• Create job opportunities for local service professionals.
+• Allow customers to compare workers based on rating and distance.
+• Improve service transparency through tracking and reviews.
+• Enable administrators to monitor and manage the entire platform.
+
+3. Business Stakeholders
+Stakeholder	Description
+Customers	People who need home services
+Service Workers	Professionals who provide services
+Admin	Platform managers
+Business Owners	Owners of the platform
+4. Business Requirements
+BR1: User Registration
+
+The system must allow customers to create accounts using email or phone.
+
+BR2: Worker Registration
+
+Workers must be able to register and submit verification documents.
+
+BR3: Service Marketplace
+
+Users should be able to browse available services such as cleaning, plumbing, and appliance repair.
+
+BR4: Worker Discovery
+
+Users must be able to find workers based on:
+
+• location
+• rating
+• service type
+
+BR5: Booking System
+
+Users must be able to schedule services and choose preferred time slots.
+
+BR6: Price Estimation
+
+Users should receive a rough cost estimate before booking.
+
+BR7: Real-time Tracking
+
+Users must be able to track the status of their service request.
+
+BR8: Reviews and Ratings
+
+Users should be able to rate and review workers after completing a service.
+
+BR9: Admin Control
+
+Admin must be able to manage users, workers, services, and bookings.
+
+FUNCTIONAL REQUIREMENTS DOCUMENT
+
+Functional requirements describe what the system should do.
+
+1. User Functional Requirements
+User Account Management
+
+Users must be able to:
+
+• Register
+• Login
+• Logout
+• Update profile
+• Reset password
+
+Service Search
+
+Users must be able to:
+
+• View available services
+• Search services
+• Filter by price
+• Filter by rating
+• Filter by distance
+
+Worker Selection
+
+Users must be able to:
+
+• view worker profiles
+• see worker ratings
+• see worker experience
+• choose preferred worker
+
+Service Booking
+
+Users must be able to:
+
+Select service
+
+Select worker
+
+Choose time slot
+
+Confirm booking
+
+Booking Tracking
+
+Users must be able to track booking status:
+
+• Request sent
+• Worker accepted
+• Worker on the way
+• Work started
+• Work completed
+
+Service History
+
+Users must be able to view:
+
+• past bookings
+• worker details
+• price paid
+• service date
+
+Payment
+
+Users must be able to pay using:
+
+• UPI
+• Card
+• Cash
+
+Rating and Feedback
+
+Users must be able to:
+
+• rate worker performance
+• write reviews
+
+2. Worker Functional Requirements
+
+Workers must be able to:
+
+• register on the platform
+• upload verification documents
+• update service availability
+• view incoming job requests
+• accept or reject bookings
+• update job progress
+• generate final bill
+• view earnings history
+
+3. Admin Functional Requirements
+
+Admin must be able to:
+
+Manage Users
+
+• view users
+• block users
+• delete users
+
+Manage Workers
+
+• approve worker registrations
+• verify documents
+• suspend workers
+
+Manage Services
+
+Admin must be able to:
+
+• add new service types
+• update service categories
+• remove services
+
+Booking Monitoring
+
+Admin must be able to:
+
+• view all bookings
+• cancel bookings
+• resolve disputes
+
+Analytics Dashboard
+
+Admin must see:
+
+• total users
+• total workers
+• active bookings
+• total revenue
+
+NON-FUNCTIONAL REQUIREMENTS
+
+Non-functional requirements define how the system performs.
+
+1. Performance Requirements
+
+The system should:
+
+• support thousands of users simultaneously
+• respond within 2 seconds
+• handle high traffic during peak hours
+
+2. Security Requirements
+
+The system must ensure:
+
+• encrypted passwords (bcrypt)
+• secure authentication (JWT)
+• role-based access control
+• protection against SQL/NoSQL injection
+
+3. Reliability
+
+The system must ensure:
+
+• data consistency
+• automatic error handling
+• failure recovery mechanisms
+
+4. Scalability
+
+The system must support:
+
+• horizontal scaling
+• cloud deployment
+• microservice expansion in the future
+
+5. Availability
+
+The platform should maintain 99.5% uptime.
+
+6. Usability
+
+The application must provide:
+
+• simple user interface
+• mobile-friendly design
+• easy booking process
+
+7. Maintainability
+
+The system must:
+
+• follow modular architecture
+• allow easy updates
+• support future feature integration
+
+8. Compatibility
+
+The application must work on:
+
+• Chrome
+• Edge
+• Firefox
+• Mobile browsers
+
+9. Data Integrity
+
+The system must ensure:
+
+• no data duplication
+• consistent booking records
+• secure storage of personal information
+
+10. Logging and Monitoring
+
+The system should log:
+
+• user activities
+• booking operations
+• error events
+
+SYSTEM FEATURES SUMMARY
+
+The platform will include:
+
+User features
+
+• account management
+• service browsing
+• worker comparison
+• service booking
+• service tracking
+• reviews and ratings
+
+Worker features
+
+• job management
+• earnings tracking
+• work status updates
+
+Admin features
+
+• worker approval
+• system monitoring
+• booking control

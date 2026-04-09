@@ -1,0 +1,503 @@
+SOFTWARE REQUIREMENTS SPECIFICATION (SRS)
+1. Introduction
+1.1 Purpose
+
+The purpose of this system is to develop a web-based on-demand home service booking platform that connects users with nearby service professionals such as cleaners, electricians, plumbers, and appliance repair technicians.
+
+The system will allow users to:
+
+Search for services
+
+View nearby workers
+
+Book services
+
+Track service progress
+
+View service history
+
+Get price quotations
+
+Workers will receive service requests and update work status, while the admin manages the entire platform.
+
+The system will be developed using the MERN stack to ensure scalability and real-time communication.
+
+1.2 Scope
+
+The platform will provide services including:
+
+Home Cleaning
+
+Electrical Repair
+
+Plumbing
+
+AC Repair
+
+Appliance Repair
+
+General Home Maintenance
+
+Main actors in the system:
+
+Admin
+
+Worker (Service Provider)
+
+User (Customer)
+
+The platform will allow:
+
+User registration and login
+
+Worker registration and verification
+
+Service booking
+
+Real-time work tracking
+
+Pricing estimation
+
+Final billing
+
+Ratings and reviews
+
+1.3 Definitions
+Term	Description
+User	Customer who books services
+Worker	Service provider performing the work
+Admin	Platform manager
+Booking	A request for a service
+Quotation	Estimated cost before service
+Work Status	Current progress of service
+2. Overall Description
+2.1 Product Perspective
+
+The system is a web-based service marketplace similar to Urban Company.
+
+Architecture:
+
+Frontend (React)
+        |
+Backend API (Node.js + Express)
+        |
+Database (MongoDB)
+
+Additional tools:
+
+JWT Authentication
+
+Google Maps API (for nearby workers)
+
+Socket.io (real-time tracking)
+
+Cloud storage (worker documents, images)
+
+2.2 User Classes
+User Type	Description
+Admin	Controls the platform
+Worker	Provides services
+User	Books services
+2.3 Operating Environment
+Component	Technology
+Frontend	React.js
+Backend	Node.js + Express
+Database	MongoDB
+Authentication	JWT
+Maps	Google Maps API
+Hosting	AWS / Vercel / DigitalOcean
+2.4 Assumptions
+
+Users have internet access.
+
+Workers have smartphones.
+
+Location services are enabled.
+
+3. Functional Requirements
+3.1 User Features
+User Registration
+
+Users should be able to:
+
+Register using
+
+Name
+
+Phone
+
+Email
+
+Password
+
+Address
+
+Login
+
+Users log in using:
+
+Email / Phone
+
+Password
+
+Authentication via JWT tokens.
+
+Service Search
+
+Users can:
+
+Search by service type
+
+Filter by
+
+Rating
+
+Distance
+
+Price
+
+Nearby Worker Detection
+
+System shows workers based on:
+
+User location
+
+Worker availability
+
+Service Booking
+
+User can:
+
+Select service
+
+Choose worker
+
+Choose time slot
+
+Confirm booking
+
+Price Quotation
+
+System gives rough estimate based on:
+
+Service type
+
+Work complexity
+
+Duration
+
+Example:
+
+Service	Estimated Price
+AC Repair	₹500 – ₹1500
+Deep Cleaning	₹1000 – ₹3000
+Work Tracking
+
+User can see:
+
+Worker assigned
+
+Worker location
+
+Work status
+
+Statuses:
+
+Pending
+Accepted
+Worker On The Way
+Work Started
+Work Completed
+Payment Pending
+Finished
+Service History
+
+User can see:
+
+Past bookings
+
+Worker details
+
+Service cost
+
+Date
+
+Rating
+
+Rating System
+
+User can rate:
+
+Worker
+
+Service quality
+
+Rating scale:
+
+1 - Poor
+2 - Fair
+3 - Good
+4 - Very Good
+5 - Excellent
+3.2 Worker Features
+Worker Registration
+
+Worker must provide:
+
+Name
+
+Phone
+
+Address
+
+ID proof
+
+Skill category
+
+Experience
+
+Admin must approve worker.
+
+Worker Dashboard
+
+Worker can see:
+
+Pending jobs
+
+Accepted jobs
+
+Completed jobs
+
+Earnings
+
+Accept / Reject Booking
+
+Worker receives booking request and can:
+
+Accept
+
+Reject
+
+Work Status Update
+
+Worker updates status:
+
+Accepted
+On the way
+Work started
+Work completed
+Final Billing
+
+Worker submits:
+
+Labor cost
+
+Parts cost
+
+Total cost
+
+System generates invoice.
+
+3.3 Admin Features
+Admin Dashboard
+
+Admin can see:
+
+Total users
+
+Total workers
+
+Total bookings
+
+Revenue
+
+Worker Management
+
+Admin can:
+
+Approve workers
+
+Suspend workers
+
+Delete workers
+
+User Management
+
+Admin can:
+
+View users
+
+Block users
+
+Booking Management
+
+Admin can:
+
+View all bookings
+
+Cancel bookings
+
+Resolve disputes
+
+Service Category Management
+
+Admin can:
+
+Add services
+
+Edit services
+
+Delete services
+
+4. Non Functional Requirements
+Performance
+
+System should support:
+
+10,000+ users
+
+Response time < 2 seconds
+
+Security
+
+Security measures:
+
+JWT authentication
+
+Password hashing (bcrypt)
+
+Input validation
+
+HTTPS encryption
+
+Scalability
+
+System should support:
+
+Horizontal scaling
+
+Load balancing
+
+Availability
+
+System uptime:
+
+99.5%
+5. System Architecture
+MERN Architecture
+Client (React)
+     |
+REST API
+     |
+Node.js + Express
+     |
+MongoDB
+6. Database Design (MongoDB)
+Users Collection
+{
+_id
+name
+email
+phone
+password
+address
+role (user/admin)
+createdAt
+}
+Workers Collection
+{
+_id
+name
+phone
+skills
+experience
+rating
+documents
+status
+location
+availability
+}
+Services Collection
+{
+_id
+serviceName
+category
+basePrice
+description
+}
+Bookings Collection
+{
+_id
+userId
+workerId
+serviceId
+status
+location
+estimatedPrice
+finalPrice
+date
+rating
+}
+Reviews Collection
+{
+_id
+bookingId
+userId
+workerId
+rating
+review
+}
+7. Backend API Design
+Authentication
+POST /api/auth/register
+POST /api/auth/login
+User APIs
+GET /api/services
+GET /api/workers/nearby
+POST /api/bookings
+GET /api/bookings/history
+POST /api/review
+Worker APIs
+GET /api/worker/jobs
+PUT /api/worker/status
+POST /api/worker/billing
+Admin APIs
+GET /api/admin/users
+GET /api/admin/workers
+PUT /api/admin/approve-worker
+DELETE /api/admin/remove-worker
+8. Frontend Design (React)
+Pages
+Home
+Login
+Register
+Service List
+Worker List
+Booking Page
+Tracking Page
+History Page
+Admin Dashboard
+Worker Dashboard
+Components
+Navbar
+ServiceCard
+WorkerCard
+BookingForm
+TrackingMap
+RatingComponent
+InvoiceComponent
+9. Future Enhancements
+
+Mobile App
+
+AI price estimation
+
+Smart worker matching
+
+Subscription plans
+
+Chat between user and worker
+
+10. Conclusion
+
+This system will provide a complete marketplace platform for home services, enabling users to easily book professionals while giving workers a platform to receive jobs. The MERN stack architecture ensures scalability, performance, and flexibility for future growth.
