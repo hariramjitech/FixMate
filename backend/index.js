@@ -1,9 +1,10 @@
+const dotenv = require('dotenv');
+dotenv.config();
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const dns = require('dns');
 dns.setServers(['8.8.8.8', '8.8.4.4']);
-const dotenv = require('dotenv');
 const cors = require('cors');
 const morgan = require('morgan');
 const connectDB = require('./config');
@@ -17,7 +18,7 @@ const reviewRoutes = require('./routes/reviewRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 
 // Load environment variables
-dotenv.config();
+// Already loaded at the top
 
 // Connect to database
 connectDB();

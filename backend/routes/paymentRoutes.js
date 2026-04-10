@@ -6,9 +6,13 @@ const { Booking } = require('../models');
 
 const router = express.Router();
 
-// Get these from env or user prompt directly
-const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || 'rzp_test_SbOtkZ1oIr92E4';
-const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'Xz6LWf06hQTzdxTlvJ1Sosmf';
+// Clean environment variable access
+const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID;
+const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
+
+if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
+    console.error('CRITICAL ERROR: Razorpay API keys are missing in .env');
+}
 
 const razorpayInstance = new Razorpay({
     key_id: RAZORPAY_KEY_ID,
@@ -45,7 +49,8 @@ router.post('/create-order', protect, async (req, res) => {
             keyId: RAZORPAY_KEY_ID
         });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('RAZORPAY ERROR (Create Order):', error);
+        res.status(500).json({ message: error.message || 'Error occurred while creating Razorpay order' });
     }
 });
 
@@ -99,7 +104,8 @@ router.post('/verify', protect, async (req, res) => {
             return res.status(400).json({ message: 'Invalid signature sent!' });
         }
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('RAZORPAY ERROR (Verify Payment):', error);
+        res.status(500).json({ message: error.message || 'Error occurred while verifying Razorpay payment' });
     }
 });
 
