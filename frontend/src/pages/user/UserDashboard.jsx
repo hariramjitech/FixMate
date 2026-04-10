@@ -49,7 +49,7 @@ const UserDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 pb-20 pt-28 px-4 md:px-6">
+    <div className="min-h-screen bg-gray-50 text-gray-900 pb-20 px-4 md:px-6">
       <div className="max-w-6xl mx-auto animate-fade-in">
         
         {/* ── Welcome Header ── */}

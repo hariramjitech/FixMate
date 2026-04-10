@@ -223,6 +223,19 @@ const bookingSchema = new mongoose.Schema({
     partsCost: {
         type: Number,
     },
+    platformFee: {
+        type: Number,
+        default: 0,
+    },
+    workerEarnings: {
+        type: Number,
+        default: 0,
+    },
+    paymentMethod: {
+        type: String,
+        enum: ['Cash', 'Online'],
+        default: 'Cash',
+    },
     date: {
         type: Date,
         required: true,

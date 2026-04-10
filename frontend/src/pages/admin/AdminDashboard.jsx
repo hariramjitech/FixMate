@@ -3,12 +3,19 @@ import axios from 'axios';
 import {
   Users, UserCheck, ShoppingBag, TrendingUp,
   Search, ShieldCheck, Trash2, UserX, ClipboardList,
-  RefreshCw, XCircle, Plus, Edit2, Package, IndianRupee
+  RefreshCw, XCircle, Plus, Edit2, Package, IndianRupee,
+  PieChart, Activity, Download, DollarSign, Wrench, CreditCard, Banknote,
+  CheckCircle2, Clock
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import StatusBadge from '../../components/shared/StatusBadge';
+import { 
+  getAdminStats, getAdminWorkers, getAdminUsers, getAdminBookings, 
+  getServices, verifyWorker, deleteWorker, deleteUser, deleteService, 
+  assignWorker, addService, updateService 
+} from '../../api';
 
-const DetailModal = ({ title, data, onClose, type }) => {
+const DetailModal = ({ title, data, onClose, type, stats }) => {
   if (!data) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-fade-in">
@@ -28,29 +35,42 @@ const DetailModal = ({ title, data, onClose, type }) => {
             </div>
           </div>
           
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4 flex-1">
              <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Phone</span>
                 <span className="text-sm font-bold text-gray-900">{data.phone || '—'}</span>
              </div>
              <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Email</span>
-                <span className="text-sm font-bold text-gray-900 truncate block">{data.email || '—'}</span>
+                <span className="text-sm font-bold text-gray-900 truncate block text-ellipsis" title={data.email}>{data.email || '—'}</span>
              </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 mt-4">
+          {stats && (
+             <div className="grid grid-cols-2 gap-4 mt-2">
+               <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-100">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 block mb-1">Total Orders</span>
+                  <span className="text-2xl font-black text-emerald-900">{stats.totalOrders}</span>
+               </div>
+               <div className="p-4 rounded-xl bg-indigo-50 border border-indigo-100">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 block mb-1">{type === 'Worker' ? 'Total Earnings' : 'Total Spent'}</span>
+                  <span className="text-2xl font-black text-indigo-900 tracking-tighter">₹{stats.totalRevenue.toLocaleString()}</span>
+               </div>
+             </div>
+          )}
+
+          <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 mt-2">
              <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Address</span>
              <span className="text-sm font-semibold text-gray-800">{data.address || '—'}</span>
           </div>
 
           {type === 'Worker' && data.skills && (
-            <div className="p-4 rounded-xl bg-indigo-50 border border-indigo-100 mt-4">
-               <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400 block mb-2">Skills & Experience</span>
+            <div className="p-4 rounded-xl bg-gray-50 border border-gray-200 mt-2">
+               <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 block mb-2">Skills & Experience</span>
                <div className="flex flex-wrap gap-2 mb-2">
-                 {data.skills.map(s => <span key={s} className="px-2 py-1 bg-white border border-indigo-100 rounded-lg text-xs font-bold text-indigo-600 shadow-sm">{s}</span>)}
+                 {data.skills.map(s => <span key={s} className="px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 shadow-sm">{s}</span>)}
                </div>
-               <span className="text-sm font-bold text-indigo-900">{data.experience} Years Experience</span>
+               <span className="text-sm font-bold text-gray-900">{data.experience} Years Experience</span>
             </div>
           )}
         </div>
@@ -78,10 +98,10 @@ const ServiceModal = ({ service, onClose, onSaved }) => {
     setSaving(true);
     try {
       if (isEdit) {
-        await axios.put(`/services/${service._id}`, { ...form, basePrice: Number(form.basePrice) });
+        await updateService(service._id, { ...form, basePrice: Number(form.basePrice) });
         toast.success('Service updated!');
       } else {
-        await axios.post('/services', { ...form, basePrice: Number(form.basePrice) });
+        await addService({ ...form, basePrice: Number(form.basePrice) });
         toast.success('Service added!');
       }
       onSaved();
@@ -148,44 +168,49 @@ const AdminDashboard = () => {
   const [bookings, setBookings] = useState([]);
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('workers');
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [activeTab, setActiveTab] = useState('analytics');
   const [search, setSearch] = useState('');
   const [serviceModal, setServiceModal] = useState(null); // null = closed, {} = new, {_id,...} = edit
   const [detailModal, setDetailModal] = useState(null); // { type: 'User'|'Worker', data: obj }
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
+  const fetchData = useCallback(async (isSilent = false) => {
+    if (!isSilent) setLoading(true);
+    setRefreshing(true);
     try {
       const [statsRes, workersRes, usersRes, bookingsRes, servicesRes] = await Promise.all([
-        axios.get('/admin/stats'),
-        axios.get('/admin/workers'),
-        axios.get('/admin/users'),
-        axios.get('/admin/bookings'),
-        axios.get('/services'),
+        getAdminStats(),
+        getAdminWorkers(),
+        getAdminUsers(),
+        getAdminBookings(),
+        getServices(),
       ]);
       setStats(statsRes.data);
       setWorkers(workersRes.data);
       setUsers(usersRes.data);
       setBookings(bookingsRes.data);
       setServices(servicesRes.data);
+      setLastUpdated(new Date());
     } catch {
       toast.error('Failed to load admin data.');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
   useEffect(() => { 
     fetchData(); 
-    const intervalId = setInterval(fetchData, 10000);
+    const intervalId = setInterval(() => fetchData(true), 30000);
     return () => clearInterval(intervalId);
   }, [fetchData]);
 
   const toggleVerifyWorker = async (id) => {
     try {
-      const res = await axios.put(`/admin/verify-worker/${id}`);
+      const res = await verifyWorker(id);
       toast.success(res.data.isVerified ? 'Worker verified!' : 'Worker unverified');
-      fetchData();
+      fetchData(true); // Silent refresh
     } catch {
       toast.error('Failed to update worker.');
     }
@@ -193,44 +218,45 @@ const AdminDashboard = () => {
 
   const handleDeleteWorker = async (id) => {
     if (!window.confirm('Delete this worker? This cannot be undone.')) return;
-    try { await axios.delete(`/admin/workers/${id}`); toast.success('Worker deleted.'); fetchData(); }
+    try { await deleteWorker(id); toast.success('Worker deleted.'); fetchData(true); }
     catch { toast.error('Failed to delete worker.'); }
   };
 
   const handleDeleteUser = async (id) => {
     if (!window.confirm('Delete this user?')) return;
-    try { await axios.delete(`/admin/users/${id}`); toast.success('User deleted.'); fetchData(); }
+    try { await deleteUser(id); toast.success('User deleted.'); fetchData(true); }
     catch { toast.error('Failed to delete user.'); }
   };
 
   const handleDeleteService = async (id) => {
     if (!window.confirm('Delete this service?')) return;
-    try { await axios.delete(`/services/${id}`); toast.success('Service deleted.'); fetchData(); }
+    try { await deleteService(id); toast.success('Service deleted.'); fetchData(true); }
     catch { toast.error('Failed to delete service.'); }
   };
 
   const handleAssignWorker = async (bookingId, workerId) => {
     if (!workerId) return;
     try {
-      await axios.put(`/admin/bookings/${bookingId}/assign`, { workerId });
+      await assignWorker(bookingId, workerId);
       toast.success('Worker assigned successfully.');
-      fetchData();
+      fetchData(true);
     } catch {
       toast.error('Failed to assign worker.');
     }
   };
 
   const statCards = [
-    { label: 'Total Revenue', value: `₹${(stats?.totalRevenue || 0).toLocaleString('en-IN')}`, icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-50' },
-    { label: 'Customers', value: stats?.totalUsers || 0, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Workers', value: stats?.totalWorkers || 0, icon: UserCheck, color: 'text-purple-600', bg: 'bg-purple-50' },
-    { label: 'Bookings', value: stats?.totalBookings || 0, icon: ShoppingBag, color: 'text-orange-600', bg: 'bg-orange-50' },
+    { label: 'Platform Profit (Fees)', value: `₹${(stats?.platformProfit || 0).toLocaleString('en-IN')}`, icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-50' },
+    { label: 'Total Materials', value: `₹${(stats?.materialsTotal || 0).toLocaleString('en-IN')}`, icon: Package, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'Platform Payouts', value: `₹${(stats?.totalPlatformEarnings || 0).toLocaleString('en-IN')}`, icon: IndianRupee, color: 'text-orange-600', bg: 'bg-orange-50' },
+    { label: 'Total Bookings', value: stats?.totalBookings || 0, icon: ClipboardList, color: 'text-indigo-600', bg: 'bg-indigo-50' },
   ];
 
   const tabs = [
+    { id: 'analytics', label: 'Analytics', icon: Activity },
+    { id: 'bookings', label: 'Bookings', count: bookings.length },
     { id: 'workers', label: 'Workers', count: workers.length },
     { id: 'users', label: 'Customers', count: users.length },
-    { id: 'bookings', label: 'Bookings', count: bookings.length },
     { id: 'services', label: 'Services', count: services.length },
   ];
 
@@ -240,17 +266,158 @@ const AdminDashboard = () => {
   const filteredBookings = bookings.filter(b => b.serviceId?.serviceName?.toLowerCase().includes(q) || b.userId?.name?.toLowerCase().includes(q));
   const filteredServices = services.filter(s => s.serviceName.toLowerCase().includes(q) || s.category.toLowerCase().includes(q));
 
+  const openWorkerDetail = (w) => {
+    const workerBookings = bookings.filter(b => b.workerId?._id === w._id && b.status === 'Finished');
+    const totalOrders = workerBookings.length;
+    const totalRevenue = workerBookings.reduce((sum, b) => sum + (b.workerEarnings || 0), 0);
+    setDetailModal({ type: 'Worker', data: w, stats: { totalOrders, totalRevenue } });
+  };
+
+  const openCustomerDetail = (u) => {
+    const customerBookings = bookings.filter(b => b.userId?._id === u._id);
+    const totalOrders = customerBookings.length;
+    const totalRevenue = customerBookings.reduce((sum, b) => sum + (b.finalPrice || 0), 0);
+    setDetailModal({ type: 'Customer', data: u, stats: { totalOrders, totalRevenue } });
+  };
+
+  /* ── Analytics View Component ─────────────────────────────────── */
+  const AnalyticsView = () => {
+    const finished = bookings.filter(b => b.status === 'Finished');
+    
+    return (
+      <div className="space-y-8 animate-fade-in">
+        {/* Treasury Breakdown */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="p-6 rounded-[2rem] bg-indigo-900 text-white shadow-xl relative overflow-hidden group">
+             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:scale-150 transition-transform duration-700" />
+             <div className="relative z-10">
+                <p className="text-[10px] font-black uppercase tracking-widest text-indigo-300 mb-2">Total Treasury Flow</p>
+                <h3 className="text-4xl font-black tracking-tighter mb-4">₹{(stats?.totalRevenue || 0).toLocaleString()}</h3>
+                <div className="space-y-2">
+                   <div className="flex justify-between text-xs font-bold py-2 border-t border-indigo-800">
+                      <span className="text-indigo-300">Net Platform Profit (Fees)</span>
+                      <span className="text-emerald-400">₹{(stats?.platformProfit || 0).toLocaleString()}</span>
+                   </div>
+                   <div className="flex justify-between text-xs font-bold py-2 border-t border-indigo-800 text-indigo-100">
+                      <span className="text-indigo-300">Total Materials Value</span>
+                      <span>₹{(stats?.materialsTotal || 0).toLocaleString()}</span>
+                   </div>
+                   <div className="flex justify-between text-xs font-bold py-2 border-t border-indigo-800 text-indigo-100">
+                      <span className="text-indigo-300">Net Worker Payouts</span>
+                      <span className="text-orange-300">₹{(stats?.totalPlatformEarnings || 0).toLocaleString()}</span>
+                   </div>
+                </div>
+             </div>
+          </div>
+
+          <div className="lg:col-span-2 grid grid-cols-2 gap-4">
+             {stats?.paymentMethodStats?.map(m => (
+               <div key={m._id} className="p-6 rounded-[2rem] bg-white border border-gray-100 shadow-sm flex flex-col justify-between">
+                  <div>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${m._id === 'Cash' || !m._id ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
+                       {m._id === 'Cash' || !m._id ? <Banknote className="w-5 h-5" /> : <CreditCard className="w-5 h-5" />}
+                    </div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{m._id || 'Cash'} Sales</p>
+                    <h4 className="text-2xl font-black text-gray-900">₹{(m.total || 0).toLocaleString()}</h4>
+                  </div>
+                  <p className="text-[10px] font-bold text-gray-400 mt-4 uppercase">{m.count} Finished Orders</p>
+               </div>
+             ))}
+             {!stats?.paymentMethodStats?.length && (
+               <div className="col-span-2 p-12 text-center bg-gray-50 rounded-[2rem] border border-dashed border-gray-200 text-gray-400 font-bold text-sm">
+                  No transaction pattern data available yet
+               </div>
+             )}
+          </div>
+        </div>
+
+        {/* Transaction Detail Log */}
+        <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden">
+           <div className="px-6 py-5 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
+              <h3 className="text-sm font-black uppercase tracking-widest text-gray-900 flex items-center gap-2">
+                 <Activity className="w-4 h-4 text-indigo-600" /> Treasury Split Journal
+              </h3>
+              <span className="text-[10px] font-bold bg-white px-3 py-1 rounded-full text-gray-500 uppercase border border-gray-100 shadow-sm">{finished.length} Completed Records</span>
+           </div>
+           <div className="overflow-x-auto">
+             <table className="w-full text-left text-xs">
+                <thead>
+                   <tr className="bg-gray-50 text-gray-400 font-black uppercase tracking-widest border-b border-gray-100">
+                      <th className="py-4 px-6">ID / Method</th>
+                      <th className="py-4 px-6">Service Detail</th>
+                      <th className="py-4 px-6 text-center">Labor (₹)</th>
+                      <th className="py-4 px-6 text-center">Parts (₹)</th>
+                      <th className="py-4 px-6 text-center text-orange-400">Fee (5%)</th>
+                      <th className="py-4 px-6 text-indigo-600 bg-indigo-50/50 text-center">Admin Net</th>
+                      <th className="py-4 px-6 text-emerald-600 text-center">Worker Net</th>
+                      <th className="py-4 px-6 text-right">Total (₹)</th>
+                   </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                   {finished.map(b => (
+                      <tr key={b._id} className="hover:bg-gray-50/50 transition-colors">
+                         <td className="py-4 px-6">
+                            <div className="flex flex-col gap-1">
+                               <span className="font-mono text-gray-400">#{b._id.slice(-6).toUpperCase()}</span>
+                               <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full w-fit ${b.paymentMethod === 'Cash' || !b.paymentMethod ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>
+                                  {b.paymentMethod || 'Cash'}
+                               </span>
+                            </div>
+                         </td>
+                         <td className="py-4 px-6">
+                            <div className="flex flex-col">
+                               <span className="font-bold text-gray-900 truncate max-w-[120px]">{b.serviceId?.serviceName}</span>
+                               <span className="text-[10px] text-gray-400">to {b.userId?.name}</span>
+                            </div>
+                         </td>
+                         <td className="py-4 px-6 font-bold text-gray-600 text-center">{b.laborCost || 0}</td>
+                         <td className="py-4 px-6 font-bold text-gray-600 text-center">{b.partsCost || 0}</td>
+                         <td className="py-4 px-6 font-bold text-orange-400 text-center">{b.platformFee || 0}</td>
+                         <td className="py-4 px-6 font-black text-indigo-600 bg-indigo-50/30 text-center">
+                            {( (b.platformFee || 0) + (b.partsCost || 0) ).toLocaleString()}
+                         </td>
+                         <td className="py-4 px-6 font-black text-emerald-600 text-center">
+                            {(b.workerEarnings || 0).toLocaleString()}
+                         </td>
+                         <td className="py-4 px-6 text-right font-black text-gray-900 text-sm">
+                            {(b.finalPrice || 0).toLocaleString()}
+                         </td>
+                      </tr>
+                   ))}
+                   {finished.length === 0 && (
+                     <tr><td colSpan={8} className="py-12 text-center text-gray-400 font-bold uppercase tracking-widest">No completed transactions to analyze</td></tr>
+                   )}
+                </tbody>
+             </table>
+           </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 pt-28 pb-12 px-6">
+    <div className="min-h-screen bg-gray-50 text-gray-900 pb-12 px-6">
       <div className="max-w-7xl mx-auto animate-fade-in">
       {/* Header */}
       <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-4xl font-black uppercase tracking-tight text-gray-900">Admin Control Panel</h1>
-          <p className="text-gray-500 font-medium mt-1">Manage your platform end-to-end</p>
+          <div className="flex items-center gap-3 mt-1.5">
+             <p className="text-gray-500 font-medium text-sm">Manage your platform end-to-end</p>
+             <span className="w-1 h-1 rounded-full bg-gray-300" />
+             <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                <Clock className="w-3 h-3" />
+                Updated {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+             </div>
+          </div>
         </div>
-        <button onClick={fetchData} className="flex items-center justify-center gap-2 bg-indigo-600 text-white font-black px-6 py-3.5 rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/30 text-sm hover:-translate-y-0.5">
-          <RefreshCw className="w-4 h-4" /> Refresh Data
+        <button 
+          onClick={() => fetchData()} 
+          disabled={refreshing}
+          className="flex items-center justify-center gap-2 bg-indigo-600 text-white font-black px-6 py-3.5 rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/30 text-sm hover:-translate-y-0.5 disabled:opacity-70 disabled:translate-y-0"
+        >
+          <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} /> 
+          {refreshing ? 'Refreshing...' : 'Refresh Data'}
         </button>
       </div>
 
@@ -262,12 +429,15 @@ const AdminDashboard = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           {statCards.map((card, i) => (
-            <div key={i} className="bg-white p-6 rounded-[2rem] border border-gray-200 shadow-sm hover:shadow-md transition-all flex flex-col gap-2">
-              <div className={`${card.bg} ${card.color} border w-12 h-12 rounded-2xl flex items-center justify-center self-end shadow-sm mb-2`}>
-                <card.icon className="w-6 h-6" />
+            <div key={i} className="bg-white p-6 rounded-[2rem] border border-gray-200 shadow-sm hover:shadow-md transition-all flex flex-col gap-2 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-gray-50 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-500" />
+              <div className="relative z-10">
+                <div className={`${card.bg} ${card.color} border w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm mb-4`}>
+                  <card.icon className="w-6 h-6" />
+                </div>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{card.label}</p>
+                <h3 className="text-4xl font-black text-gray-900 tracking-tighter">{card.value}</h3>
               </div>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{card.label}</p>
-              <h3 className="text-4xl font-black text-gray-900 tracking-tighter">{card.value}</h3>
             </div>
           ))}
         </div>
@@ -309,6 +479,9 @@ const AdminDashboard = () => {
         </div>
 
         <div className="overflow-x-auto">
+          {/* ─── Analytics ─── */}
+          {activeTab === 'analytics' && <AnalyticsView />}
+
           {/* ─── Workers ─── */}
           {activeTab === 'workers' && (
             <table className="w-full text-left">
@@ -325,7 +498,7 @@ const AdminDashboard = () => {
               <tbody className="divide-y divide-gray-100">
                 {filteredWorkers.map(w => (
                   <tr key={w._id} className="hover:bg-gray-50 transition-colors">
-                    <td className="py-4 px-4 font-bold text-indigo-600 cursor-pointer hover:underline" onClick={() => setDetailModal({ type: 'Worker', data: w })}>
+                    <td className="py-4 px-4 font-bold text-indigo-600 cursor-pointer hover:underline" onClick={() => openWorkerDetail(w)}>
                       {w.name}
                     </td>
                     <td className="py-4 px-4">
@@ -386,7 +559,7 @@ const AdminDashboard = () => {
               <tbody className="divide-y divide-gray-100">
                 {filteredUsers.map(u => (
                   <tr key={u._id} className="hover:bg-gray-50 transition-colors">
-                    <td className="py-4 px-4 font-bold text-indigo-600 cursor-pointer hover:underline" onClick={() => setDetailModal({ type: 'Customer', data: u })}>
+                    <td className="py-4 px-4 font-bold text-indigo-600 cursor-pointer hover:underline" onClick={() => openCustomerDetail(u)}>
                       {u.name}
                     </td>
                     <td className="py-4 px-4">
@@ -425,6 +598,7 @@ const AdminDashboard = () => {
                   <th className="pb-4 px-4">Service</th>
                   <th className="pb-4 px-4">Customer</th>
                   <th className="pb-4 px-4">Worker</th>
+                  <th className="pb-4 px-4">Pay Method</th>
                   <th className="pb-4 px-4">Status</th>
                   <th className="pb-4 px-4 text-right">Amount</th>
                 </tr>
@@ -440,19 +614,30 @@ const AdminDashboard = () => {
                         b.workerId.name
                       ) : (
                         <select
-                          className="bg-gray-100 border-none rounded-lg text-xs py-1 px-2 text-gray-700 outline-none focus:ring-2 focus:ring-primary-500 max-w-[120px]"
+                          key={workers.map(w => `${w._id}:${w.isVerified}`).join(',')}
+                          className="bg-gray-50 border border-gray-200 rounded-xl text-xs py-1.5 px-3 text-gray-700 outline-none focus:ring-2 focus:ring-indigo-300 max-w-[180px] shadow-sm cursor-pointer"
                           onChange={(e) => handleAssignWorker(b._id, e.target.value)}
                           defaultValue=""
+                          title="Only verified workers shown"
                         >
                           <option value="" disabled>Assign...</option>
-                          {workers.filter(w => w.isVerified).map(w => (
-                            <option key={w._id} value={w._id}>{w.name} ({w.skills.join(', ')})</option>
-                          ))}
+                          {workers.filter(w => w.isVerified).length === 0 ? (
+                            <option disabled>No verified workers yet</option>
+                          ) : (
+                            workers.filter(w => w.isVerified).map(w => (
+                              <option key={w._id} value={w._id}>{w.name} ({w.skills?.slice(0,2).join(', ')})</option>
+                            ))
+                          )}
                         </select>
                       )}
                     </td>
+                    <td className="py-4 px-4">
+                       <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-lg ${b.paymentMethod === 'Online' ? 'bg-blue-50 text-blue-600 border border-blue-100' : 'bg-gray-50 text-gray-500 border border-gray-100'}`}>
+                          {b.paymentMethod || 'Cash'}
+                       </span>
+                    </td>
                     <td className="py-4 px-4"><StatusBadge status={b.status} /></td>
-                    <td className="py-4 px-4 text-right font-bold text-primary-600">₹{b.finalPrice || b.estimatedPrice}</td>
+                    <td className="py-4 px-4 text-right font-bold text-primary-600 text-sm">₹{(b.finalPrice || b.estimatedPrice).toLocaleString()}</td>
                   </tr>
                 ))}
                 {!loading && filteredBookings.length === 0 && (
@@ -517,6 +702,7 @@ const AdminDashboard = () => {
           title={`${detailModal.type} Details`}
           data={detailModal.data}
           type={detailModal.type}
+          stats={detailModal.stats}
           onClose={() => setDetailModal(null)}
         />
       )}

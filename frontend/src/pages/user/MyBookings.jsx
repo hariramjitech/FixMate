@@ -5,6 +5,7 @@ import TrackingModal from '../../components/shared/TrackingModal';
 import WorkerReviewModal from '../../components/shared/WorkerReviewModal';
 import SubmitReviewModal from '../../components/shared/SubmitReviewModal';
 import toast from 'react-hot-toast';
+import { useAuth } from '../../context/AuthContext';
 import { 
   Calendar, MapPin, Clock, IndianRupee, Loader2, Navigation,
   MessageSquare, User, ShieldCheck, Zap, XCircle
@@ -17,6 +18,7 @@ const MyBookings = () => {
   const [reviewWorker, setReviewWorker] = useState(null);
   const [submitReviewBooking, setSubmitReviewBooking] = useState(null);
   const [cancellingState, setCancellingState] = useState(null);
+  const { socket } = useAuth();
 
   const fetchBookings = async () => {
     try {
@@ -36,6 +38,21 @@ const MyBookings = () => {
     fetchBookings();
   }, []);
 
+  useEffect(() => {
+    if (!socket) return;
+    
+    const handleUpdate = (updatedBooking) => {
+      setBookings(prev => prev.map(b => b._id === updatedBooking._id ? updatedBooking : b));
+      setTrackingDoc(prev => (prev && prev._id === updatedBooking._id) ? updatedBooking : prev);
+    };
+
+    socket.on('bookingUpdated', handleUpdate);
+
+    return () => {
+      socket.off('bookingUpdated', handleUpdate);
+    };
+  }, [socket]);
+
   const handleCancel = async (id) => {
     try {
       setCancellingState(id);
@@ -50,7 +67,7 @@ const MyBookings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 pb-20 pt-28 px-4 md:px-6">
+    <div className="min-h-screen bg-gray-50 text-gray-900 pb-20 px-4 md:px-6">
       <div className="max-w-5xl mx-auto animate-fade-in">
         
         <div className="mb-10 text-center sm:text-left">

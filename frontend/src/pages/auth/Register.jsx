@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import {
   User, Mail, Lock, Phone, MapPin, Loader2, ArrowRight,
   Hammer, Briefcase, ChevronLeft, Check, Sparkles, UserPlus, ArrowLeft,
-  ShieldCheck
+  ShieldCheck, XCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -43,6 +43,7 @@ const Register = () => {
   const [role, setRole] = useState('user');
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [skillInput, setSkillInput] = useState('');
   const { register } = useAuth();
   const navigate = useNavigate();
 
@@ -61,6 +62,27 @@ const Register = () => {
         ? f.skills.filter(s => s !== skill)
         : [...f.skills, skill]
     }));
+  };
+
+  const handleAddSkill = (e) => {
+    if (e) e.preventDefault();
+    const val = skillInput.trim();
+    if (!val) return;
+    if (!form.skills.includes(val)) {
+      setForm(f => ({ ...f, skills: [...f.skills, val] }));
+    }
+    setSkillInput('');
+  };
+
+  const handleSkillKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddSkill(e);
+    }
+  };
+
+  const removeSkill = (skillToRemove) => {
+    setForm(f => ({ ...f, skills: f.skills.filter(s => s !== skillToRemove) }));
   };
 
   const detectLocation = () => {
@@ -284,13 +306,16 @@ const Register = () => {
                     <ArrowLeft className="w-3.5 h-3.5" /> Back to Account
                   </button>
 
-                  <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex gap-4 items-center">
-                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-indigo-600 shadow-sm flex-shrink-0">
-                        <ShieldCheck className="w-5 h-5" />
+                  <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 flex gap-4 items-center mb-4">
+                    <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-amber-500 shadow-sm flex-shrink-0 border border-amber-100">
+                        <ShieldCheck className="w-6 h-6" />
                     </div>
-                    <p className="text-xs font-bold text-indigo-700 leading-relaxed">
-                      Verification Required: We'll review your pro profile before you can receive orders.
-                    </p>
+                    <div>
+                      <h4 className="text-sm font-black text-amber-900 mb-0.5">Verification Process Needed</h4>
+                      <p className="text-xs font-semibold text-amber-700 leading-relaxed">
+                        After registration, an admin must verify your profile before you can start receiving new orders. You will be notified once activated.
+                      </p>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -318,21 +343,55 @@ const Register = () => {
                     <label className="block text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] flex items-center gap-2">
                       Skills & Specialties <Sparkles className="w-3 h-3 text-yellow-500" />
                     </label>
-                    <div className="flex flex-wrap gap-2">
-                      {SKILL_OPTIONS.map(s => (
-                        <button
-                          key={s}
-                          type="button"
-                          onClick={() => toggleSkill(s)}
-                          className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all ${
-                            form.skills.includes(s)
-                              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200'
-                              : 'bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-gray-900'
-                          }`}
-                        >
-                          {s}
-                        </button>
-                      ))}
+
+                    {/* Selected Skills Tags */}
+                    {form.skills.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {form.skills.map(s => (
+                          <div key={s} className="px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-black flex items-center gap-2 shadow-sm">
+                            {s}
+                            <button type="button" onClick={() => removeSkill(s)} className="hover:bg-indigo-500 rounded-full p-0.5 transition-colors">
+                              <XCircle className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Input for custom skills */}
+                    <div className="relative group">
+                      <input
+                        type="text"
+                        placeholder="Type a skill and hit enter..."
+                        value={skillInput}
+                        onChange={(e) => setSkillInput(e.target.value)}
+                        onKeyDown={handleSkillKeyDown}
+                        className="w-full pl-5 pr-20 py-3.5 bg-gray-50 border-2 border-transparent focus:border-indigo-500 focus:bg-white text-gray-900 placeholder-gray-400 rounded-2xl outline-none transition-all font-bold text-sm"
+                      />
+                      <button 
+                        type="button" 
+                        onClick={handleAddSkill}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-indigo-100 text-indigo-600 hover:bg-indigo-200 hover:text-indigo-700 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm"
+                      >
+                        Add
+                      </button>
+                    </div>
+
+                    {/* Suggested Skills */}
+                    <div className="pt-2">
+                      <p className="text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest">Suggested</p>
+                      <div className="flex flex-wrap gap-2">
+                        {SKILL_OPTIONS.filter(s => !form.skills.includes(s)).map(s => (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => toggleSkill(s)}
+                            className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-gray-900 border border-gray-100 shadow-sm hover:shadow"
+                          >
+                            + {s}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
 

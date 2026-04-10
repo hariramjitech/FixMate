@@ -119,6 +119,17 @@ const updateBookingStatus = async (req, res) => {
             booking.status = status || booking.status;
             if (laborCost !== undefined) booking.laborCost = laborCost;
             if (partsCost !== undefined) booking.partsCost = partsCost;
+            
+            // Financial Math Fix: Platform Fee (5%) on Labor Cost
+            if (laborCost !== undefined || partsCost !== undefined) {
+                const labor = laborCost !== undefined ? laborCost : (booking.laborCost || 0);
+                const parts = partsCost !== undefined ? partsCost : (booking.partsCost || 0);
+                
+                booking.platformFee = Number((labor * 0.05).toFixed(2)); // 5% fee
+                booking.workerEarnings = Number((labor - booking.platformFee).toFixed(2));
+                booking.finalPrice = Number((labor + parts).toFixed(2));
+            }
+
             if (finalPrice !== undefined) booking.finalPrice = finalPrice;
 
             const updatedBooking = await booking.save();

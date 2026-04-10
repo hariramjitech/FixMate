@@ -53,8 +53,8 @@ const BillingForm = ({ job, onSubmit }) => {
       </p>
       <div className="grid grid-cols-2 gap-3 mb-4">
         {[
-          { label: 'Labour Cost', val: labor, set: setLabor },
-          { label: 'Parts Cost', val: parts, set: setParts },
+          { label: 'Labour (Service)', val: labor, set: setLabor },
+          { label: 'Parts / Materials', val: parts, set: setParts },
         ].map(({ label, val, set }) => (
           <div key={label} className="space-y-1.5">
             <label className="text-[10px] font-black uppercase ml-1 text-gray-500">{label}</label>
@@ -70,12 +70,26 @@ const BillingForm = ({ job, onSubmit }) => {
           </div>
         ))}
       </div>
-      <div className="flex items-center justify-between p-4 rounded-xl mb-4 bg-indigo-50 border border-indigo-100">
-        <span className="text-xs font-black uppercase tracking-widest text-indigo-600">Total Bill</span>
-        <span className="text-xl font-black text-indigo-700">₹{total.toLocaleString()}</span>
+      <div className="space-y-2 mb-4 p-4 rounded-xl bg-gray-50 border border-gray-100">
+        <div className="flex justify-between text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+           <span>Subtotal (Labour)</span>
+           <span>₹{parseFloat(labor) || 0}</span>
+        </div>
+        <div className="flex justify-between text-[11px] font-bold text-red-400 uppercase tracking-wider">
+           <span>Platform Fee (5%)</span>
+           <span>- ₹{((parseFloat(labor) || 0) * 0.05).toFixed(2)}</span>
+        </div>
+        <div className="pt-2 border-t border-dashed border-gray-200 flex justify-between items-center bg-indigo-50 -mx-4 px-4 py-2 mt-2">
+          <span className="text-xs font-black uppercase tracking-widest text-indigo-600">You Earn</span>
+          <span className="text-xl font-black text-indigo-700">₹{((parseFloat(labor) || 0) * 0.95).toFixed(2)}</span>
+        </div>
+      </div>
+      <div className="flex items-center justify-between px-4 mb-4">
+         <span className="text-[10px] font-black uppercase text-gray-400">Total Customer Bill (inc. parts)</span>
+         <span className="text-sm font-bold text-gray-900">₹{(total).toLocaleString()}</span>
       </div>
       <button type="submit" disabled={saving} className="w-full py-4 rounded-xl flex items-center justify-center gap-2 font-black text-sm text-white transition-all bg-indigo-600 hover:bg-indigo-700 shadow-md">
-        {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <><CheckCircle2 className="w-5 h-5" /> Confirm & Send</>}
+        {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <><CheckCircle2 className="w-5 h-5" /> Confirm & Send Invoice</>}
       </button>
     </form>
   );
@@ -112,9 +126,10 @@ const WorkerDashboard = () => {
 
   const initData = useCallback(async () => {
     setLoading(true);
-    await Promise.all([fetchJobs(), fetchReviews(), refreshUser()]);
+    await Promise.all([fetchJobs(), fetchReviews()]);
     setLoading(false);
-  }, [fetchJobs, fetchReviews, refreshUser]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchJobs, fetchReviews]);
 
   useEffect(() => { initData(); }, [initData]);
 
@@ -127,10 +142,23 @@ const WorkerDashboard = () => {
     const handleUpdate = (updatedBooking) => {
       setJobs((prev) => prev.map((b) => (b._id === updatedBooking._id ? updatedBooking : b)));
     };
+    const handleVerification = (isVerified) => {
+      refreshUser();
+      if (isVerified) {
+        toast.success("Good news! Your account has been verified. You can now receive orders and go online.", { icon: '🎉', duration: 8000 });
+      } else {
+        toast.error("Your verification status was revoked by an administrator. You can no longer receive new orders.", { duration: 8000 });
+      }
+    };
     socket.on('newBooking', handleNew);
     socket.on('bookingUpdated', handleUpdate);
-    return () => { socket.off('newBooking', handleNew); socket.off('bookingUpdated', handleUpdate); };
-  }, [socket]);
+    socket.on('verificationUpdated', handleVerification);
+    return () => { 
+      socket.off('newBooking', handleNew); 
+      socket.off('bookingUpdated', handleUpdate); 
+      socket.off('verificationUpdated', handleVerification); 
+    };
+  }, [socket, refreshUser]);
 
   const toggleAvailability = async () => {
     try {
@@ -160,7 +188,7 @@ const WorkerDashboard = () => {
   };
 
   const finishedJobs = jobs.filter(j => j.status === 'Finished');
-  const totalEarnings = finishedJobs.reduce((sum, j) => sum + (j.finalPrice || 0), 0);
+  const totalEarnings = finishedJobs.reduce((sum, j) => sum + (j.workerEarnings || 0), 0);
   const avgRating = reviews.length > 0 
     ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1) 
     : (user?.rating?.toFixed(1) || '5.0');
@@ -173,26 +201,43 @@ const WorkerDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 pb-20 pt-28 px-4 md:px-6">
+    <div className="min-h-screen bg-gray-50 text-gray-900 pb-20 px-4 md:px-6">
       <div className="max-w-6xl mx-auto animate-fade-in">
 
-        {/* ── Verification Banner ── */}
-        {!user.isVerified && (
-          <div className="mb-10 p-6 rounded-[2rem] bg-indigo-600 shadow-xl shadow-indigo-200 border border-indigo-500 relative overflow-hidden group">
+        {/* ── Verification Status Banner ── always visible ── */}
+        {!user.isVerified ? (
+          <div className="mb-8 p-5 rounded-[2rem] bg-indigo-600 shadow-xl shadow-indigo-200 border border-indigo-500 relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:scale-110 transition-transform duration-700" />
-            <div className="flex flex-col md:flex-row items-center gap-6 relative z-10">
-              <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30">
-                <ShieldCheck className="w-8 h-8" />
+            <div className="flex flex-col md:flex-row items-center gap-5 relative z-10">
+              <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30 flex-shrink-0">
+                <ShieldCheck className="w-7 h-7" />
               </div>
               <div className="flex-1 text-center md:text-left">
-                <h3 className="text-xl font-black text-white uppercase tracking-tight">Account Pending Verification</h3>
-                <p className="text-indigo-100 font-bold mt-1 leading-relaxed">
-                  Your professional profile is currently being reviewed by our administration team. 
-                  Once verified, you'll be able to receive service requests and manage your availability.
+                <h3 className="text-lg font-black text-white uppercase tracking-tight">Account Not Verified</h3>
+                <p className="text-indigo-100 font-semibold mt-0.5 text-sm leading-relaxed">
+                  Your profile is pending admin approval. You cannot accept new jobs yet. Your history is still viewable.
                 </p>
               </div>
-              <div className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 text-white font-black text-[10px] uppercase tracking-widest">
+              <div className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 text-white font-black text-[10px] uppercase tracking-widest flex-shrink-0">
                 <Loader2 className="w-3.5 h-3.5 animate-spin" /> Pending Review
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="mb-8 p-5 rounded-[2rem] bg-emerald-500 shadow-xl shadow-emerald-200 border border-emerald-400 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:scale-110 transition-transform duration-700" />
+            <div className="flex flex-col md:flex-row items-center gap-5 relative z-10">
+              <div className="w-14 h-14 rounded-2xl bg-white/25 backdrop-blur-md flex items-center justify-center text-white border border-white/30 flex-shrink-0">
+                <ShieldCheck className="w-7 h-7" />
+              </div>
+              <div className="flex-1 text-center md:text-left">
+                <h3 className="text-lg font-black text-white uppercase tracking-tight">Account Verified ✓</h3>
+                <p className="text-emerald-50 font-semibold mt-0.5 text-sm leading-relaxed">
+                  Your professional profile is verified. You can go online, accept jobs, and serve customers.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 bg-white/15 backdrop-blur-sm rounded-xl border border-white/20 text-white font-black text-[10px] uppercase tracking-widest flex-shrink-0">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Active Pro
               </div>
             </div>
           </div>
@@ -228,19 +273,25 @@ const WorkerDashboard = () => {
             </div>
 
             <div className="flex items-center gap-3 p-3 rounded-2xl bg-gray-50 border border-gray-100">
-              <div className={`flex items-center gap-3 px-4 py-2 rounded-xl bg-white shadow-sm border border-gray-100 ${!user.isVerified && 'opacity-50 grayscale cursor-not-allowed'}`}>
-                <span className={`w-2.5 h-2.5 rounded-full ${isAvailable && user.isVerified ? 'bg-emerald-400 animate-pulse shadow-sm' : 'bg-gray-400'}`} />
-                <span className={`text-xs font-black uppercase tracking-widest ${isAvailable && user.isVerified ? 'text-emerald-600' : 'text-gray-400'}`}>
-                  {isAvailable && user.isVerified ? 'Online' : 'Offline'}
-                </span>
-                <button
-                  disabled={!user.isVerified}
-                  onClick={toggleAvailability}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all ${isAvailable && user.isVerified ? 'bg-indigo-600' : 'bg-gray-300'}`}
-                >
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isAvailable && user.isVerified ? 'translate-x-6' : 'translate-x-1'}`} />
-                </button>
-              </div>
+              {user.isVerified ? (
+                <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-white shadow-sm border border-gray-100">
+                  <span className={`w-2.5 h-2.5 rounded-full ${isAvailable ? 'bg-emerald-400 animate-pulse shadow-sm' : 'bg-gray-400'}`} />
+                  <span className={`text-xs font-black uppercase tracking-widest ${isAvailable ? 'text-emerald-600' : 'text-gray-400'}`}>
+                    {isAvailable ? 'Online' : 'Offline'}
+                  </span>
+                  <button
+                    onClick={toggleAvailability}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all ${isAvailable ? 'bg-indigo-600' : 'bg-gray-300'}`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isAvailable ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 shadow-inner border border-gray-200 opacity-60 pointer-events-none">
+                  <ShieldCheck className="w-4 h-4 text-gray-500" />
+                  <span className="text-xs font-black uppercase tracking-widest text-gray-500">Locked</span>
+                </div>
+              )}
               <button onClick={initData} className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm">
                 <RefreshCw className="w-4 h-4" />
               </button>

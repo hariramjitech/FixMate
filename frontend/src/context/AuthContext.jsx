@@ -12,20 +12,52 @@ export const AuthProvider = ({ children }) => {
     const saved = localStorage.getItem('urban_user');
     return saved ? JSON.parse(saved) : null;
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    // Start as loading if there's a saved session so we sync before rendering
+    const saved = localStorage.getItem('urban_user');
+    return Boolean(saved);
+  });
   const [socket, setSocket] = useState(null);
 
   // Set default axios base URL
   axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
+  // Sync auth header whenever user changes
   useEffect(() => {
     if (user?.token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${user.token}`;
     } else {
       delete axios.defaults.headers.common['Authorization'];
     }
-    setLoading(false);
   }, [user]);
+
+  // On every app load, re-sync user profile from server to pick up any
+  // changes made while offline (e.g. admin verified worker, profile edits).
+  useEffect(() => {
+    if (user?.token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${user.token}`;
+      const isWorker = user.role === 'worker';
+      const endpoint = isWorker ? '/workers/profile' : '/auth/me';
+      axios.get(endpoint)
+        .then(res => {
+          const updatedData = { ...user, ...res.data };
+          if (!updatedData.role) updatedData.role = isWorker ? 'worker' : 'user';
+          setUser(updatedData);
+          localStorage.setItem('urban_user', JSON.stringify(updatedData));
+        })
+        .catch(err => {
+          if (err.response?.status === 401) {
+            setUser(null);
+            localStorage.removeItem('urban_user');
+          }
+        })
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+  // Only run once on mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -73,7 +105,7 @@ export const AuthProvider = ({ children }) => {
     if (!user) return;
     try {
       const isWorker = user.role === 'worker';
-      const endpoint = isWorker ? '/worker/profile' : '/auth/me';
+      const endpoint = isWorker ? '/workers/profile' : '/auth/me';
       const response = await axios.get(endpoint);
       
       // Merge with existing user to keep token and other local state

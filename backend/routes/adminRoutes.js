@@ -67,6 +67,11 @@ const verifyWorker = async (req, res) => {
             { $set: { isVerified: !current.isVerified } },
             { new: true, select: '-password' }
         );
+
+        if (req.io) {
+            req.io.to(updatedWorker._id.toString()).emit('verificationUpdated', updatedWorker.isVerified);
+        }
+
         res.json(updatedWorker);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -119,16 +124,39 @@ const getStats = async (req, res) => {
         const totalUsers = await User.countDocuments({ role: 'user' });
         const totalWorkers = await Worker.countDocuments({});
         const totalBookings = await Booking.countDocuments({});
-        const totalRevenue = await Booking.aggregate([
+        const statsAggregation = await Booking.aggregate([
             { $match: { status: 'Finished' } },
-            { $group: { _id: null, total: { $sum: '$finalPrice' } } },
+            { 
+                $group: { 
+                    _id: null, 
+                    totalRevenue: { $sum: '$finalPrice' },
+                    platformRevenue: { $sum: { $ifNull: ['$platformFee', 0] } },
+                    partsRevenue: { $sum: { $ifNull: ['$partsCost', 0] } },
+                    workerEarnings: { $sum: { $ifNull: ['$workerEarnings', 0] } }
+                } 
+            },
+        ]);
+
+        const paymentMethodStats = await Booking.aggregate([
+            { $match: { status: 'Finished' } },
+            { 
+                $group: { 
+                    _id: '$paymentMethod', 
+                    count: { $sum: 1 },
+                    total: { $sum: '$finalPrice' }
+                } 
+            }
         ]);
 
         res.json({
             totalUsers,
             totalWorkers,
             totalBookings,
-            totalRevenue: totalRevenue.length > 0 ? totalRevenue[0].total : 0,
+            totalRevenue: statsAggregation.length > 0 ? (statsAggregation[0].platformRevenue + statsAggregation[0].partsRevenue) : 0, // Keep this as gross volume
+            platformProfit: statsAggregation.length > 0 ? statsAggregation[0].platformRevenue : 0, // NEW: Just the 5% fee
+            materialsTotal: statsAggregation.length > 0 ? statsAggregation[0].partsRevenue : 0, // NEW: Just the materials
+            totalPlatformEarnings: statsAggregation.length > 0 ? statsAggregation[0].workerEarnings : 0,
+            paymentMethodStats
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -154,7 +182,19 @@ const assignWorkerToBooking = async (req, res) => {
         booking.status = 'Worker On The Way'; // Or whichever status makes sense when assigned
         await booking.save();
         
-        res.json(booking);
+        const populatedBooking = await Booking.findById(booking._id)
+            .populate('userId', 'name email phone address')
+            .populate('workerId', 'name phone rating')
+            .populate('serviceId', 'serviceName category basePrice');
+
+        if (req.io) {
+            req.io.to(workerId.toString()).emit('newBooking', populatedBooking);
+            if (populatedBooking.userId) {
+                req.io.to(populatedBooking.userId._id.toString()).emit('bookingUpdated', populatedBooking);
+            }
+        }
+        
+        res.json(populatedBooking);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

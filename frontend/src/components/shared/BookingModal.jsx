@@ -194,7 +194,7 @@ const BookingModal = ({ service, onClose }) => {
                      <span className={`text-sm font-bold ${!formData.workerId ? 'text-indigo-700' : 'text-gray-900'}`}>Assign fastest available</span>
                      {!formData.workerId && <CheckCircle2 className="w-5 h-5 text-indigo-600" />}
                    </button>
-                   {workers.slice(0, 3).map(w => (
+                   {workers.map(w => (
                      <button
                        key={w._id}
                        onClick={() => setFormData({ ...formData, workerId: w._id })}
