@@ -39,7 +39,7 @@ router.post('/create-order', protect, async (req, res) => {
         };
 
         const order = await razorpayInstance.orders.create(options);
-        
+
         if (!order) {
             return res.status(500).json({ message: 'Some error occurred generating order' });
         }
@@ -80,7 +80,7 @@ router.post('/verify', protect, async (req, res) => {
             if (booking) {
                 booking.status = 'Finished';
                 await booking.save();
-                
+
                 // Emitting update
                 if (req.io) {
                     const populatedBooking = await Booking.findById(booking._id)
@@ -95,7 +95,7 @@ router.post('/verify', protect, async (req, res) => {
                         req.io.to(booking.userId.toString()).emit('bookingUpdated', populatedBooking);
                     }
                 }
-                
+
                 return res.json({ message: 'Payment verified successfully and booking finished.' });
             } else {
                 return res.status(404).json({ message: 'Booking not found' });

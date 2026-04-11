@@ -69,7 +69,7 @@ const TrackingModal = ({ booking, onClose, onPaymentComplete }) => {
           }
         },
         modal: {
-          ondismiss: function() {
+          ondismiss: function () {
             setProcessing(false);
             toast.error('Payment cancelled. You can try again or pay cash.');
           }
@@ -176,50 +176,50 @@ const TrackingModal = ({ booking, onClose, onPaymentComplete }) => {
           {/* Pricing Breakdown (V2) */}
           {(booking.laborCost || booking.partsCost) && (
             <div className="mb-6 px-5 py-4 rounded-2xl bg-white border border-gray-100 shadow-sm space-y-2">
-               <div className="flex justify-between items-center text-xs font-bold text-gray-500 uppercase tracking-widest">
-                  <span className="flex items-center gap-2"><Wrench className="w-3.5 h-3.5 text-indigo-400" /> Labor Fees</span>
-                  <span className="text-gray-900">₹{booking.laborCost || 0}</span>
-               </div>
-               {booking.partsCost > 0 && (
-                 <div className="flex justify-between items-center text-xs font-bold text-gray-500 uppercase tracking-widest">
-                    <span className="flex items-center gap-2"><Package className="w-3.5 h-3.5 text-indigo-400" /> Parts & Materials</span>
-                    <span className="text-gray-900">₹{booking.partsCost}</span>
-                 </div>
-               )}
-               <div className="pt-2 mt-2 border-t border-dashed border-gray-200 flex justify-between items-center">
-                  <span className="text-[10px] font-black uppercase text-indigo-600 tracking-wider">Net Amount</span>
-                  <span className="text-lg font-black text-gray-900">₹{booking.finalPrice}</span>
-               </div>
+              <div className="flex justify-between items-center text-xs font-bold text-gray-500 uppercase tracking-widest">
+                <span className="flex items-center gap-2"><Wrench className="w-3.5 h-3.5 text-indigo-400" /> Labor Fees</span>
+                <span className="text-gray-900">₹{booking.laborCost || 0}</span>
+              </div>
+              {booking.partsCost > 0 && (
+                <div className="flex justify-between items-center text-xs font-bold text-gray-500 uppercase tracking-widest">
+                  <span className="flex items-center gap-2"><Package className="w-3.5 h-3.5 text-indigo-400" /> Parts & Materials</span>
+                  <span className="text-gray-900">₹{booking.partsCost}</span>
+                </div>
+              )}
+              <div className="pt-2 mt-2 border-t border-dashed border-gray-200 flex justify-between items-center">
+                <span className="text-[10px] font-black uppercase text-indigo-600 tracking-wider">Net Amount</span>
+                <span className="text-lg font-black text-gray-900">₹{booking.finalPrice}</span>
+              </div>
             </div>
           )}
 
           {/* Payment Section (V2) */}
           {isPaymentPending && (
             <div className="mb-8 p-5 rounded-2xl bg-indigo-50 border border-indigo-100 animate-fade-in group relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/30 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:scale-125 transition-transform duration-700" />
-                <div className="relative z-10">
-                  <h3 className="text-sm font-black text-indigo-900 mb-4 uppercase tracking-widest flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-indigo-500" /> Select Payment Method
-                  </h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button 
-                      onClick={handlePayOnline}
-                      disabled={processing}
-                      className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-white border-2 border-indigo-200 hover:border-indigo-600 hover:shadow-md transition-all text-indigo-700 group/btn disabled:opacity-70"
-                    >
-                      {processing ? <Loader2 className="w-6 h-6 animate-spin text-indigo-600" /> : <CreditCard className="w-6 h-6 group-hover/btn:scale-110 transition-transform" />}
-                      <span className="text-xs font-black uppercase tracking-widest">Pay Online</span>
-                    </button>
-                    <button 
-                      onClick={handlePayCash}
-                      disabled={processing}
-                      className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-white border-2 border-gray-200 hover:border-emerald-500 hover:shadow-md transition-all text-gray-700 hover:text-emerald-600 group/btn disabled:opacity-70"
-                    >
-                      {processing ? <Loader2 className="w-6 h-6 animate-spin text-gray-400" /> : <Banknote className="w-6 h-6 group-hover/btn:scale-110 transition-transform" />}
-                      <span className="text-xs font-black uppercase tracking-widest">Pay Cash</span>
-                    </button>
-                  </div>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/30 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:scale-125 transition-transform duration-700" />
+              <div className="relative z-10">
+                <h3 className="text-sm font-black text-indigo-900 mb-4 uppercase tracking-widest flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-indigo-500" /> Select Payment Method
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={handlePayOnline}
+                    disabled={processing}
+                    className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-white border-2 border-indigo-200 hover:border-indigo-600 hover:shadow-md transition-all text-indigo-700 group/btn disabled:opacity-70"
+                  >
+                    {processing ? <Loader2 className="w-6 h-6 animate-spin text-indigo-600" /> : <CreditCard className="w-6 h-6 group-hover/btn:scale-110 transition-transform" />}
+                    <span className="text-xs font-black uppercase tracking-widest">Pay Online</span>
+                  </button>
+                  <button
+                    onClick={handlePayCash}
+                    disabled={processing}
+                    className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-white border-2 border-gray-200 hover:border-emerald-500 hover:shadow-md transition-all text-gray-700 hover:text-emerald-600 group/btn disabled:opacity-70"
+                  >
+                    {processing ? <Loader2 className="w-6 h-6 animate-spin text-gray-400" /> : <Banknote className="w-6 h-6 group-hover/btn:scale-110 transition-transform" />}
+                    <span className="text-xs font-black uppercase tracking-widest">Pay Cash</span>
+                  </button>
                 </div>
+              </div>
             </div>
           )}
 
@@ -235,17 +235,15 @@ const TrackingModal = ({ booking, onClose, onPaymentComplete }) => {
                   return (
                     <div key={step} className="flex items-center gap-5 relative group">
                       <div
-                        className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
-                          done ? 'bg-indigo-600 shadow-md shadow-indigo-600/30' : 'bg-white border-2 border-gray-200'
-                        }`}
+                        className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 ${done ? 'bg-indigo-600 shadow-md shadow-indigo-600/30' : 'bg-white border-2 border-gray-200'
+                          }`}
                         style={{ transform: active ? 'scale(1.2)' : 'scale(1)' }}
                       >
                         {done && <CheckCircle2 className="w-4 h-4 text-white" />}
                       </div>
                       <div className="flex-1">
-                        <span className={`block transition-all duration-300 ${
-                          active ? 'text-indigo-600 font-black text-[15px]' : done ? 'text-gray-900 font-bold text-sm' : 'text-gray-400 font-medium text-sm'
-                        }`}>
+                        <span className={`block transition-all duration-300 ${active ? 'text-indigo-600 font-black text-[15px]' : done ? 'text-gray-900 font-bold text-sm' : 'text-gray-400 font-medium text-sm'
+                          }`}>
                           {step}
                         </span>
                         {active && <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mt-0.5 block">Current Stage</span>}

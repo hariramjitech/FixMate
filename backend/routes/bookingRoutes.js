@@ -88,7 +88,7 @@ const getMyJobs = async (req, res) => {
  * @access  Private (User or Worker)
  */
 const updateBookingStatus = async (req, res) => {
-    const { status, laborCost, partsCost, finalPrice } = req.body;
+    const { status, laborCost, partsCost, finalPrice, paymentMethod } = req.body;
 
     try {
         const booking = await Booking.findById(req.params.id);
@@ -117,6 +117,7 @@ const updateBookingStatus = async (req, res) => {
             }
 
             booking.status = status || booking.status;
+            if (paymentMethod) booking.paymentMethod = paymentMethod;
             if (laborCost !== undefined) booking.laborCost = laborCost;
             if (partsCost !== undefined) booking.partsCost = partsCost;
             

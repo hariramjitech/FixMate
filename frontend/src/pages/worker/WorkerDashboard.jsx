@@ -23,8 +23,8 @@ const STATUS_BTN_LABEL = {
 };
 
 const BillingForm = ({ job, onSubmit }) => {
-  const [labor, setLabor]   = useState('');
-  const [parts, setParts]   = useState('');
+  const [labor, setLabor] = useState('');
+  const [parts, setParts] = useState('');
   const [saving, setSaving] = useState(false);
 
   const total = (parseFloat(labor) || 0) + (parseFloat(parts) || 0);
@@ -72,12 +72,12 @@ const BillingForm = ({ job, onSubmit }) => {
       </div>
       <div className="space-y-2 mb-4 p-4 rounded-xl bg-gray-50 border border-gray-100">
         <div className="flex justify-between text-[11px] font-bold text-gray-500 uppercase tracking-wider">
-           <span>Subtotal (Labour)</span>
-           <span>₹{parseFloat(labor) || 0}</span>
+          <span>Subtotal (Labour)</span>
+          <span>₹{parseFloat(labor) || 0}</span>
         </div>
         <div className="flex justify-between text-[11px] font-bold text-red-400 uppercase tracking-wider">
-           <span>Platform Fee (5%)</span>
-           <span>- ₹{((parseFloat(labor) || 0) * 0.05).toFixed(2)}</span>
+          <span>Platform Fee (5%)</span>
+          <span>- ₹{((parseFloat(labor) || 0) * 0.05).toFixed(2)}</span>
         </div>
         <div className="pt-2 border-t border-dashed border-gray-200 flex justify-between items-center bg-indigo-50 -mx-4 px-4 py-2 mt-2">
           <span className="text-xs font-black uppercase tracking-widest text-indigo-600">You Earn</span>
@@ -85,8 +85,8 @@ const BillingForm = ({ job, onSubmit }) => {
         </div>
       </div>
       <div className="flex items-center justify-between px-4 mb-4">
-         <span className="text-[10px] font-black uppercase text-gray-400">Total Customer Bill (inc. parts)</span>
-         <span className="text-sm font-bold text-gray-900">₹{(total).toLocaleString()}</span>
+        <span className="text-[10px] font-black uppercase text-gray-400">Total Customer Bill (inc. parts)</span>
+        <span className="text-sm font-bold text-gray-900">₹{(total).toLocaleString()}</span>
       </div>
       <button type="submit" disabled={saving} className="w-full py-4 rounded-xl flex items-center justify-center gap-2 font-black text-sm text-white transition-all bg-indigo-600 hover:bg-indigo-700 shadow-md">
         {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <><CheckCircle2 className="w-5 h-5" /> Confirm & Send Invoice</>}
@@ -97,10 +97,10 @@ const BillingForm = ({ job, onSubmit }) => {
 
 const WorkerDashboard = () => {
   const { user, socket, refreshUser } = useAuth();
-  const [jobs, setJobs]       = useState([]);
+  const [jobs, setJobs] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab]         = useState('Active');
+  const [tab, setTab] = useState('Active');
   const [isAvailable, setIsAvailable] = useState(user?.isAvailable ?? true);
 
   const tabs = ['Pending', 'Active', 'Completed', 'Reviews'];
@@ -109,7 +109,7 @@ const WorkerDashboard = () => {
     try {
       const res = await getMyJobs();
       // sort by newest
-      setJobs(res.data.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)));
+      setJobs(res.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
     } catch {
       toast.error('Failed to load jobs.');
     }
@@ -128,7 +128,7 @@ const WorkerDashboard = () => {
     setLoading(true);
     await Promise.all([fetchJobs(), fetchReviews()]);
     setLoading(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchJobs, fetchReviews]);
 
   useEffect(() => { initData(); }, [initData]);
@@ -153,10 +153,10 @@ const WorkerDashboard = () => {
     socket.on('newBooking', handleNew);
     socket.on('bookingUpdated', handleUpdate);
     socket.on('verificationUpdated', handleVerification);
-    return () => { 
-      socket.off('newBooking', handleNew); 
-      socket.off('bookingUpdated', handleUpdate); 
-      socket.off('verificationUpdated', handleVerification); 
+    return () => {
+      socket.off('newBooking', handleNew);
+      socket.off('bookingUpdated', handleUpdate);
+      socket.off('verificationUpdated', handleVerification);
     };
   }, [socket, refreshUser]);
 
@@ -171,8 +171,8 @@ const WorkerDashboard = () => {
   };
 
   const filteredItems = tab === 'Reviews' ? reviews : jobs.filter((j) => {
-    if (tab === 'Pending')   return j.status === 'Pending';
-    if (tab === 'Active')    return ['Accepted', 'Worker On The Way', 'Work Started', 'Work Completed', 'Payment Pending'].includes(j.status);
+    if (tab === 'Pending') return j.status === 'Pending';
+    if (tab === 'Active') return ['Accepted', 'Worker On The Way', 'Work Started', 'Work Completed', 'Payment Pending'].includes(j.status);
     if (tab === 'Completed') return ['Finished', 'Cancelled'].includes(j.status);
     return true;
   });
@@ -189,14 +189,14 @@ const WorkerDashboard = () => {
 
   const finishedJobs = jobs.filter(j => j.status === 'Finished');
   const totalEarnings = finishedJobs.reduce((sum, j) => sum + (j.workerEarnings || 0), 0);
-  const avgRating = reviews.length > 0 
-    ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1) 
+  const avgRating = reviews.length > 0
+    ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
     : (user?.rating?.toFixed(1) || '5.0');
 
   const stats = [
     { label: 'Earnings', value: `₹${totalEarnings.toLocaleString('en-IN')}`, icon: IndianRupee, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
     { label: 'Rating', value: avgRating, icon: Star, color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-100' },
-    { label: 'Active', value: jobs.filter(j => ['Accepted','Worker On The Way','Work Started'].includes(j.status)).length, icon: Zap, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100' },
+    { label: 'Active', value: jobs.filter(j => ['Accepted', 'Worker On The Way', 'Work Started'].includes(j.status)).length, icon: Zap, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100' },
     { label: 'Done', value: finishedJobs.length, icon: Briefcase, color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-100' },
   ];
 
@@ -260,7 +260,7 @@ const WorkerDashboard = () => {
                 <div className="flex items-center gap-3 mt-1 justify-center md:justify-start">
                   <span className="font-bold text-gray-500">Hello, {user?.name || 'Pro'}</span>
                   {!user?.isVerified && (
-                     <span className="px-2 py-0.5 rounded-lg bg-yellow-50 text-yellow-600 border border-yellow-100 text-[10px] font-black uppercase">Unverified</span>
+                    <span className="px-2 py-0.5 rounded-lg bg-yellow-50 text-yellow-600 border border-yellow-100 text-[10px] font-black uppercase">Unverified</span>
                   )}
                   {user?.isVerified && (
                     <>
@@ -307,8 +307,8 @@ const WorkerDashboard = () => {
               className="group p-5 rounded-3xl bg-white border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex items-center justify-between"
             >
               <div>
-                 <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{s.label}</p>
-                 <h3 className="text-3xl font-black text-gray-900 tracking-tighter leading-none">{s.value}</h3>
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{s.label}</p>
+                <h3 className="text-3xl font-black text-gray-900 tracking-tighter leading-none">{s.value}</h3>
               </div>
               <div className={`w-14 h-14 rounded-2xl ${s.bg} ${s.border} border flex items-center justify-center transition-transform group-hover:scale-110 flex-shrink-0`}>
                 <s.icon className={`w-6 h-6 ${s.color}`} />
@@ -330,11 +330,10 @@ const WorkerDashboard = () => {
                 <button
                   key={t}
                   onClick={() => setTab(t)}
-                  className={`flex-1 lg:w-full flex items-center justify-between px-5 py-4 rounded-2xl font-bold text-sm transition-all ${
-                    isActive 
-                      ? 'bg-indigo-50 text-indigo-700 border border-indigo-100 shadow-sm' 
+                  className={`flex-1 lg:w-full flex items-center justify-between px-5 py-4 rounded-2xl font-bold text-sm transition-all ${isActive
+                      ? 'bg-indigo-50 text-indigo-700 border border-indigo-100 shadow-sm'
                       : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 border border-transparent'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     <Icon className="w-5 h-5" />
@@ -391,7 +390,7 @@ const WorkerDashboard = () => {
                 {filteredItems.map((job, idx) => (
                   <div key={job._id} className="animate-fade-in-up bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden" style={{ animationDelay: `${idx * 0.04}s` }}>
                     <div className="flex flex-col md:flex-row gap-6 p-6">
-                      
+
                       {/* Job Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -485,7 +484,7 @@ const WorkerDashboard = () => {
                           )}
                         </div>
                       </div>
-                      
+
                     </div>
                   </div>
                 ))}

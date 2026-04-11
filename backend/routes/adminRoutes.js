@@ -126,25 +126,25 @@ const getStats = async (req, res) => {
         const totalBookings = await Booking.countDocuments({});
         const statsAggregation = await Booking.aggregate([
             { $match: { status: 'Finished' } },
-            { 
-                $group: { 
-                    _id: null, 
+            {
+                $group: {
+                    _id: null,
                     totalRevenue: { $sum: '$finalPrice' },
                     platformRevenue: { $sum: { $ifNull: ['$platformFee', 0] } },
                     partsRevenue: { $sum: { $ifNull: ['$partsCost', 0] } },
                     workerEarnings: { $sum: { $ifNull: ['$workerEarnings', 0] } }
-                } 
+                }
             },
         ]);
 
         const paymentMethodStats = await Booking.aggregate([
             { $match: { status: 'Finished' } },
-            { 
-                $group: { 
-                    _id: '$paymentMethod', 
+            {
+                $group: {
+                    _id: '$paymentMethod',
                     count: { $sum: 1 },
                     total: { $sum: '$finalPrice' }
-                } 
+                }
             }
         ]);
 
@@ -172,16 +172,16 @@ const assignWorkerToBooking = async (req, res) => {
     try {
         const { workerId } = req.body;
         const booking = await Booking.findById(req.params.id);
-        
+
         if (!booking) return res.status(404).json({ message: 'Booking not found' });
-        
+
         const worker = await Worker.findById(workerId);
         if (!worker) return res.status(404).json({ message: 'Worker not found' });
-        
+
         booking.workerId = workerId;
         booking.status = 'Worker On The Way'; // Or whichever status makes sense when assigned
         await booking.save();
-        
+
         const populatedBooking = await Booking.findById(booking._id)
             .populate('userId', 'name email phone address')
             .populate('workerId', 'name phone rating')
@@ -193,7 +193,7 @@ const assignWorkerToBooking = async (req, res) => {
                 req.io.to(populatedBooking.userId._id.toString()).emit('bookingUpdated', populatedBooking);
             }
         }
-        
+
         res.json(populatedBooking);
     } catch (error) {
         res.status(500).json({ message: error.message });

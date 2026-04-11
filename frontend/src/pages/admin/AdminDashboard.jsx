@@ -3,9 +3,9 @@ import {
   Search, RefreshCw, XCircle, Plus, Activity, Clock
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { 
-  getAdminStats, getAdminBookings, 
-  updateService, addService 
+import {
+  getAdminStats, getAdminBookings,
+  updateService, addService
 } from '../../api';
 
 // Sub-components
@@ -35,43 +35,43 @@ const DetailModal = ({ title, data, onClose, type, stats }) => {
               <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">{type}</p>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4 flex-1">
-             <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
-                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Phone</span>
-                <span className="text-sm font-bold text-gray-900">{data.phone || '—'}</span>
-             </div>
-             <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
-                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Email</span>
-                <span className="text-sm font-bold text-gray-900 truncate block text-ellipsis" title={data.email}>{data.email || '—'}</span>
-             </div>
+            <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
+              <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Phone</span>
+              <span className="text-sm font-bold text-gray-900">{data.phone || '—'}</span>
+            </div>
+            <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
+              <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Email</span>
+              <span className="text-sm font-bold text-gray-900 truncate block text-ellipsis" title={data.email}>{data.email || '—'}</span>
+            </div>
           </div>
 
           {stats && (
-             <div className="grid grid-cols-2 gap-4 mt-2">
-               <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-100">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 block mb-1">Total Orders</span>
-                  <span className="text-2xl font-black text-emerald-900">{stats.totalOrders}</span>
-               </div>
-               <div className="p-4 rounded-xl bg-indigo-50 border border-indigo-100">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 block mb-1">{type === 'Worker' ? 'Total Earnings' : 'Total Spent'}</span>
-                  <span className="text-2xl font-black text-indigo-900 tracking-tighter">₹{stats.totalRevenue.toLocaleString()}</span>
-               </div>
-             </div>
+            <div className="grid grid-cols-2 gap-4 mt-2">
+              <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-100">
+                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 block mb-1">Total Orders</span>
+                <span className="text-2xl font-black text-emerald-900">{stats.totalOrders}</span>
+              </div>
+              <div className="p-4 rounded-xl bg-indigo-50 border border-indigo-100">
+                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 block mb-1">{type === 'Worker' ? 'Total Earnings' : 'Total Spent'}</span>
+                <span className="text-2xl font-black text-indigo-900 tracking-tighter">₹{stats.totalRevenue.toLocaleString()}</span>
+              </div>
+            </div>
           )}
 
           <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 mt-2">
-             <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Address</span>
-             <span className="text-sm font-semibold text-gray-800">{data.address || '—'}</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Address</span>
+            <span className="text-sm font-semibold text-gray-800">{data.address || '—'}</span>
           </div>
 
           {type === 'Worker' && data.skills && (
             <div className="p-4 rounded-xl bg-gray-50 border border-gray-200 mt-2">
-               <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 block mb-2">Skills & Experience</span>
-               <div className="flex flex-wrap gap-2 mb-2">
-                 {data.skills.map(s => <span key={s} className="px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 shadow-sm">{s}</span>)}
-               </div>
-               <span className="text-sm font-bold text-gray-900">{data.experience} Years Experience</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 block mb-2">Skills & Experience</span>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {data.skills.map(s => <span key={s} className="px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 shadow-sm">{s}</span>)}
+              </div>
+              <span className="text-sm font-bold text-gray-900">{data.experience} Years Experience</span>
             </div>
           )}
         </div>
@@ -186,8 +186,8 @@ const AdminDashboard = () => {
     }
   }, []);
 
-  useEffect(() => { 
-    fetchStats(); 
+  useEffect(() => {
+    fetchStats();
     const intervalId = setInterval(() => fetchStats(true), 60000); // 1 minute stats sync
     return () => clearInterval(intervalId);
   }, [fetchStats]);
@@ -208,26 +208,26 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 pb-12 px-6">
       <div className="max-w-7xl mx-auto animate-fade-in">
-        
+
         {/* Header */}
         <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-4xl font-black uppercase tracking-tight text-gray-900">Admin Control Panel</h1>
             <div className="flex items-center gap-3 mt-1.5">
-               <p className="text-gray-500 font-medium text-sm">Professional Platform Management</p>
-               <span className="w-1 h-1 rounded-full bg-gray-300" />
-               <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                  <Clock className="w-3 h-3" />
-                  Synced {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-               </div>
+              <p className="text-gray-500 font-medium text-sm">Professional Platform Management</p>
+              <span className="w-1 h-1 rounded-full bg-gray-300" />
+              <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                <Clock className="w-3 h-3" />
+                Synced {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </div>
             </div>
           </div>
-          <button 
-            onClick={() => fetchStats()} 
+          <button
+            onClick={() => fetchStats()}
             disabled={refreshing}
             className="flex items-center justify-center gap-2 bg-indigo-600 text-white font-black px-6 py-3.5 rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/30 text-sm hover:-translate-y-0.5 disabled:opacity-70"
           >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} /> 
+            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
             {refreshing ? 'Syncing...' : 'Sync Dashboard'}
           </button>
         </div>
@@ -240,8 +240,8 @@ const AdminDashboard = () => {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 border-b border-gray-100 pb-6">
             <div className="flex gap-2 flex-wrap p-1.5 bg-gray-50 border border-gray-100 rounded-2xl">
               {tabs.map(t => (
-                <button 
-                  key={t.id} 
+                <button
+                  key={t.id}
                   onClick={() => { setActiveTab(t.id); setSearch(''); }}
                   className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${activeTab === t.id ? 'bg-white shadow-sm border border-gray-200 text-indigo-600' : 'text-gray-500 hover:text-gray-900'}`}
                 >
