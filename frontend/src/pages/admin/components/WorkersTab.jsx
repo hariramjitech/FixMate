@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ShieldCheck, Search, Trash2, XCircle, UserX, Loader2 } from 'lucide-react';
 import { getAdminWorkers, verifyWorker, deleteWorker } from '../../../api';
+import { SkeletonList } from '../../../components/ui/Skeleton';
+import { Star } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const WorkersTab = React.memo(({ search, onOpenDetail }) => {
@@ -47,9 +49,10 @@ const WorkersTab = React.memo(({ search, onOpenDetail }) => {
   const filtered = workers.filter(w => w.name.toLowerCase().includes(q) || w.email.toLowerCase().includes(q));
 
   if (loading) return (
-    <div className="flex flex-col items-center py-20">
-      <Loader2 className="w-10 h-10 animate-spin text-indigo-600 mb-4" />
-      <p className="text-xs font-black uppercase tracking-widest text-indigo-400">Loading Workers...</p>
+    <div className="bg-white rounded-[2rem] p-6 border border-gray-100 shadow-sm animate-fade-in">
+      <table className="w-full">
+        <SkeletonList rows={8} cols={7} />
+      </table>
     </div>
   );
 
@@ -59,6 +62,7 @@ const WorkersTab = React.memo(({ search, onOpenDetail }) => {
         <tr className="text-gray-400 text-xs font-bold uppercase tracking-widest border-b border-gray-100">
           <th className="pb-4 px-4">Name</th>
           <th className="pb-4 px-4">Contact</th>
+          <th className="pb-4 px-4 text-center">Rating</th>
           <th className="pb-4 px-4">Skills</th>
           <th className="pb-4 px-4">Exp</th>
           <th className="pb-4 px-4">Status</th>
@@ -76,6 +80,15 @@ const WorkersTab = React.memo(({ search, onOpenDetail }) => {
                 <span className="font-semibold text-gray-700">{w.email}</span>
                 <span className="text-gray-400">{w.phone}</span>
               </div>
+            </td>
+            <td className="py-4 px-4 text-center">
+               <div className="flex flex-col items-center gap-1">
+                  <div className="flex items-center gap-0.5">
+                     <Star className="w-3 h-3 fill-orange-400 text-orange-400" />
+                     <span className="font-black text-gray-900 text-sm">{w.rating?.toFixed(1) || '0.0'}</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{w.numReviews || 0} reviews</span>
+               </div>
             </td>
             <td className="py-4 px-4">
               <div className="flex flex-wrap gap-1">

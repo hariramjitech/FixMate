@@ -15,6 +15,7 @@ import WorkersTab from './components/WorkersTab';
 import UsersTab from './components/UsersTab';
 import BookingsTab from './components/BookingsTab';
 import ServicesTab from './components/ServicesTab';
+import RatingsTab from './components/RatingsTab';
 
 const DetailModal = ({ title, data, onClose, type, stats }) => {
   if (!data) return null;
@@ -188,13 +189,14 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     fetchStats();
-    const intervalId = setInterval(() => fetchStats(true), 60000); // 1 minute stats sync
+    const intervalId = setInterval(() => fetchStats(true), 5000); // 5s near real-time sync
     return () => clearInterval(intervalId);
   }, [fetchStats]);
 
   const tabs = [
     { id: 'analytics', label: 'Analytics', icon: Activity },
     { id: 'bookings', label: 'Bookings' },
+    { id: 'ratings', label: 'Ratings' },
     { id: 'workers', label: 'Workers' },
     { id: 'users', label: 'Customers' },
     { id: 'services', label: 'Services' },
@@ -266,11 +268,12 @@ const AdminDashboard = () => {
           </div>
 
           <div className="overflow-hidden">
-            {activeTab === 'analytics' && <AnalyticsTab stats={stats} bookings={[]} /* Analytics will fetch its own if needed, or we can fetch a summary */ />}
+            {activeTab === 'analytics' && <AnalyticsTab stats={stats} bookings={[]} />}
             {activeTab === 'workers' && <WorkersTab search={search} onOpenDetail={(w) => handleOpenDetail('Worker', w)} />}
             {activeTab === 'users' && <UsersTab search={search} onOpenDetail={(u) => handleOpenDetail('Customer', u)} />}
             {activeTab === 'bookings' && <BookingsTab search={search} />}
             {activeTab === 'services' && <ServicesTab search={search} onEdit={(s) => setServiceModal(s)} />}
+            {activeTab === 'ratings' && <RatingsTab />}
           </div>
         </div>
 

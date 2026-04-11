@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Package, Edit2, Trash2, Loader2 } from 'lucide-react';
 import { getServices, deleteService } from '../../../api';
+import { SkeletonCard } from '../../../components/ui/Skeleton';
 import toast from 'react-hot-toast';
 
 const ServicesTab = React.memo(({ search, onEdit }) => {
@@ -37,9 +38,8 @@ const ServicesTab = React.memo(({ search, onEdit }) => {
   const filtered = services.filter(s => s.serviceName.toLowerCase().includes(q) || s.category.toLowerCase().includes(q));
 
   if (loading) return (
-    <div className="flex flex-col items-center py-20">
-      <Loader2 className="w-10 h-10 animate-spin text-indigo-600 mb-4" />
-      <p className="text-xs font-black uppercase tracking-widest text-indigo-400">Loading Services...</p>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
+      {[...Array(6)].map((_, i) => <SkeletonCard key={i} className="h-48" />)}
     </div>
   );
 

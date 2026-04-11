@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { UserX, Trash2, Loader2 } from 'lucide-react';
 import { getAdminUsers, deleteUser } from '../../../api';
+import { SkeletonList } from '../../../components/ui/Skeleton';
 import toast from 'react-hot-toast';
 
 const UsersTab = React.memo(({ search, onOpenDetail }) => {
@@ -37,9 +38,10 @@ const UsersTab = React.memo(({ search, onOpenDetail }) => {
   const filtered = users.filter(u => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
 
   if (loading) return (
-    <div className="flex flex-col items-center py-20">
-      <Loader2 className="w-10 h-10 animate-spin text-indigo-600 mb-4" />
-      <p className="text-xs font-black uppercase tracking-widest text-indigo-400">Loading Customers...</p>
+    <div className="bg-white rounded-[2rem] p-6 border border-gray-100 shadow-sm animate-fade-in">
+      <table className="w-full">
+        <SkeletonList rows={8} cols={4} />
+      </table>
     </div>
   );
 

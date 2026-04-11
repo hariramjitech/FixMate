@@ -6,7 +6,7 @@ import axios from 'axios';
 import {
   Calendar, MapPin, Clock, CheckCircle2,
   DollarSign, User, Briefcase, XCircle, Loader2,
-  RefreshCw, IndianRupee, Star, MessageSquare, Zap, ShieldCheck
+  RefreshCw, IndianRupee, Star, MessageSquare, Zap, ShieldCheck, Activity
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -102,6 +102,7 @@ const WorkerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('Active');
   const [isAvailable, setIsAvailable] = useState(user?.isAvailable ?? true);
+  const [viewingSplit, setViewingSplit] = useState(null);
 
   const tabs = ['Pending', 'Active', 'Completed', 'Reviews'];
 
@@ -474,6 +475,15 @@ const WorkerDashboard = () => {
                             </button>
                           )}
 
+                          {job.status === 'Finished' && (
+                            <button
+                              onClick={() => setViewingSplit(job)}
+                              className="w-full py-4 rounded-xl flex items-center justify-center gap-2 text-sm font-black text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-all active:scale-95"
+                            >
+                              <Activity className="w-4 h-4" /> See Payout split
+                            </button>
+                          )}
+
                           {(job.status === 'Finished' || job.status === 'Cancelled') && (
                             <div className="flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-200">
                               {job.status === 'Finished'
@@ -493,8 +503,47 @@ const WorkerDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Split Receipt Modal Restoration */}
+      {viewingSplit && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-950/80 backdrop-blur-md animate-fade-in">
+           <div className="w-full max-w-sm bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-scale-in border border-white/20 text-gray-900">
+              <div className="p-8 bg-indigo-950 text-white text-center relative">
+                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 bg-indigo-500/20 rounded-full -translate-y-1/2 blur-2xl" />
+                 <p className="text-[10px] font-black uppercase tracking-widest text-indigo-300 mb-2">Payout Completion Receipt</p>
+                 <h4 className="text-sm font-bold opacity-80 mb-2">Booking #{viewingSplit._id.slice(-6).toUpperCase()}</h4>
+                 <div className="text-4xl font-black tracking-tighter">₹{viewingSplit.finalPrice.toLocaleString()}</div>
+                 <div className="mt-4 inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-500">
+                    Job Successfully Finalized
+                 </div>
+              </div>
+              <div className="p-8 space-y-6">
+                 {[
+                   { label: 'Platform Service Fee (5%)', val: viewingSplit.platformFee, col: 'text-red-400', icon: '🏦' },
+                   { label: 'Materials/Parts (Provided)', val: viewingSplit.partsCost, col: 'text-gray-400', icon: '📦' },
+                   { label: 'Your Net Earnings', val: viewingSplit.workerEarnings, col: 'text-emerald-600', icon: '💰' },
+                 ].map(row => (
+                   <div key={row.label} className="flex items-center justify-between border-b border-gray-50 pb-4 last:border-0 last:pb-0">
+                      <div className="flex items-center gap-3">
+                         <span className="text-xl">{row.icon}</span>
+                         <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 leading-tight">{row.label}</span>
+                      </div>
+                      <span className={`text-lg font-black ${row.col}`}>₹{row.val || 0}</span>
+                   </div>
+                 ))}
+                 <button 
+                    onClick={() => setViewingSplit(null)}
+                    className="w-full py-4 mt-4 bg-gray-900 text-white rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-black transition-all shadow-xl active:scale-95"
+                 >
+                    Dismiss Receipt
+                 </button>
+              </div>
+           </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default WorkerDashboard;
+

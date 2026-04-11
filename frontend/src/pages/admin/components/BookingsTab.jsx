@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { ClipboardList, Loader2 } from 'lucide-react';
 import { getAdminBookings, assignWorker, getAdminWorkers } from '../../../api';
 import StatusBadge from '../../../components/shared/StatusBadge';
+import { SkeletonList, SkeletonCard } from '../../../components/ui/Skeleton';
 import toast from 'react-hot-toast';
 
 const BookingsTab = React.memo(({ search }) => {
@@ -26,8 +27,8 @@ const BookingsTab = React.memo(({ search }) => {
 
   useEffect(() => {
     fetchData();
-    // Poll bookings every 30s as they are dynamic
-    const interval = setInterval(fetchData, 30000);
+    // Poll bookings every 5s for near real-time feel
+    const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
   }, [fetchData]);
 
@@ -47,9 +48,10 @@ const BookingsTab = React.memo(({ search }) => {
   const filtered = bookings.filter(b => b.serviceId?.serviceName?.toLowerCase().includes(q) || b.userId?.name?.toLowerCase().includes(q));
 
   if (loading) return (
-    <div className="flex flex-col items-center py-20">
-      <Loader2 className="w-10 h-10 animate-spin text-indigo-600 mb-4" />
-      <p className="text-xs font-black uppercase tracking-widest text-indigo-400">Syncing Bookings...</p>
+    <div className="bg-white rounded-[2rem] p-6 border border-gray-100 shadow-sm animate-fade-in">
+      <table className="w-full">
+        <SkeletonList rows={8} cols={7} />
+      </table>
     </div>
   );
 
@@ -63,7 +65,8 @@ const BookingsTab = React.memo(({ search }) => {
           <th className="pb-4 px-4">Worker</th>
           <th className="pb-4 px-4">Pay Method</th>
           <th className="pb-4 px-4">Status</th>
-          <th className="pb-4 px-4 text-right">Amount</th>
+          <th className="pb-4 px-4 text-center">Amount</th>
+          <th className="pb-4 px-4 text-right">Action</th>
         </tr>
       </thead>
       <tbody className="divide-y divide-gray-100">
@@ -99,7 +102,14 @@ const BookingsTab = React.memo(({ search }) => {
               </span>
             </td>
             <td className="py-4 px-4"><StatusBadge status={b.status} /></td>
-            <td className="py-4 px-4 text-right font-bold text-indigo-600 text-sm">₹{(b.finalPrice || b.estimatedPrice).toLocaleString()}</td>
+            <td className="py-4 px-4 text-center font-bold text-indigo-600 text-sm">₹{(b.finalPrice || b.estimatedPrice).toLocaleString()}</td>
+            <td className="py-4 px-4 text-right">
+               {b.status === 'Finished' && (
+                  <div className="text-[10px] font-black uppercase tracking-widest text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg inline-block shadow-sm">
+                     Treasury Verified
+                  </div>
+               )}
+            </td>
           </tr>
         ))}
         {filtered.length === 0 && (

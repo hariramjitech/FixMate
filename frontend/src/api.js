@@ -80,4 +80,9 @@ export const deleteWorker    = (id) => api.delete(`/admin/workers/${id}`);
 export const deleteUser      = (id) => api.delete(`/admin/users/${id}`);
 export const cancelBooking   = (id) => api.put(`/bookings/${id}/status`, { status: 'Cancelled' });
 
+// Advanced Admin
+export const getAdminAnalytics = ()   => api.get('/admin/analytics');
+export const getAdminReviews   = ()   => api.get('/admin/reviews');
+export const deleteAdminReview = (id) => api.delete(`/admin/reviews/${id}`);
+
 export default api;

@@ -200,13 +200,135 @@ const assignWorkerToBooking = async (req, res) => {
     }
 };
 
+/**
+ * @desc    Get advanced platform analytics (Monthly, Services, Workers)
+ * @route   GET /api/admin/analytics
+ * @access  Private/Admin
+ */
+const getAnalytics = async (req, res) => {
+    try {
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+        // 1. Monthly Revenue & Booking Counts
+        const monthlyStats = await Booking.aggregate([
+            { $match: { status: 'Finished', createdAt: { $gte: sixMonthsAgo } } },
+            {
+                $group: {
+                    _id: {
+                        month: { $month: '$createdAt' },
+                        year: { $year: '$createdAt' }
+                    },
+                    revenue: { $sum: '$finalPrice' },
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { '_id.year': 1, '_id.month': 1 } }
+        ]);
+
+        // 2. Service Distribution
+        const serviceStats = await Booking.aggregate([
+            { $match: { status: 'Finished' } },
+            {
+                $group: {
+                    _id: '$serviceId',
+                    count: { $sum: 1 },
+                    revenue: { $sum: '$finalPrice' }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'services',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'service'
+                }
+            },
+            { $unwind: '$service' },
+            { $sort: { count: -1 } }
+        ]);
+
+        // 3. Top Workers
+        const workerStats = await Booking.aggregate([
+            { $match: { status: 'Finished' } },
+            {
+                $group: {
+                    _id: '$workerId',
+                    earnings: { $sum: '$workerEarnings' },
+                    jobs: { $sum: 1 }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'workers',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'worker'
+                }
+            },
+            { $unwind: '$worker' },
+            { $sort: { earnings: -1 } },
+            { $limit: 5 }
+        ]);
+
+        res.json({
+            monthlyStats,
+            serviceStats,
+            workerStats
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+/**
+ * @desc    Get all platform reviews
+ * @route   GET /api/admin/reviews
+ * @access  Private/Admin
+ */
+const getReviews = async (req, res) => {
+    try {
+        const { Review } = require('../models');
+        const reviews = await Review.find({})
+            .populate('userId', 'name email')
+            .populate('workerId', 'name email')
+            .populate({ path: 'bookingId', populate: { path: 'serviceId', select: 'serviceName' } })
+            .sort({ createdAt: -1 });
+        res.json(reviews);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+/**
+ * @desc    Delete/Moderate a review
+ * @route   DELETE /api/admin/reviews/:id
+ * @access  Private/Admin
+ */
+const deleteReview = async (req, res) => {
+    try {
+        const { Review } = require('../models');
+        const review = await Review.findByIdAndDelete(req.params.id);
+        if (review) {
+            res.json({ message: 'Review removed by admin moderation' });
+        } else {
+            res.status(404).json({ message: 'Review not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 router.get('/users', protect, admin, getUsers);
 router.get('/workers', protect, admin, getWorkers);
 router.get('/bookings', protect, admin, getBookings);
 router.get('/stats', protect, admin, getStats);
+router.get('/analytics', protect, admin, getAnalytics);
+router.get('/reviews', protect, admin, getReviews);
 router.put('/verify-worker/:id', protect, admin, verifyWorker);
 router.put('/bookings/:id/assign', protect, admin, assignWorkerToBooking);
 router.delete('/workers/:id', protect, admin, deleteWorker);
 router.delete('/users/:id', protect, admin, deleteUser);
+router.delete('/reviews/:id', protect, admin, deleteReview);
 
 module.exports = router;
