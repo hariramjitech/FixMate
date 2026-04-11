@@ -34,7 +34,7 @@ const AnalyticsTab = React.memo(({ stats }) => {
         <div className="p-6 rounded-[2rem] bg-indigo-900 text-white shadow-xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:scale-150 transition-transform duration-700" />
           <div className="relative z-10">
-            <p className="text-[10px] font-black uppercase tracking-widest text-indigo-300 mb-2">Total Treasury Flow</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-indigo-300 mb-2">Total Platform Flow (Gross)</p>
             <h3 className="text-4xl font-black tracking-tighter mb-4">₹{(stats?.totalRevenue || 0).toLocaleString()}</h3>
             <div className="space-y-2">
               <div className="flex justify-between text-xs font-bold py-2 border-t border-indigo-800">
@@ -42,7 +42,7 @@ const AnalyticsTab = React.memo(({ stats }) => {
                 <span className="text-emerald-400">₹{(stats?.platformProfit || 0).toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-xs font-bold py-2 border-t border-indigo-800 text-indigo-100">
-                <span className="text-indigo-300">Total Materials Value</span>
+                <span className="text-indigo-300">Materials & Parts Value</span>
                 <span>₹{(stats?.materialsTotal || 0).toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-xs font-bold py-2 border-t border-indigo-800 text-indigo-100">
@@ -90,10 +90,10 @@ const AnalyticsTab = React.memo(({ stats }) => {
                 <th className="py-4 px-6">Service Detail</th>
                 <th className="py-4 px-6 text-center">Labor (₹)</th>
                 <th className="py-4 px-6 text-center">Parts (₹)</th>
-                <th className="py-4 px-6 text-center text-orange-400">Fee (5%)</th>
-                <th className="py-4 px-6 text-indigo-600 bg-indigo-50/50 text-center">Admin Net</th>
+                <th className="py-4 px-6 text-center text-orange-400">Platform Fee</th>
+                <th className="py-4 px-6 text-indigo-600 bg-indigo-50/50 text-center">Admin Take</th>
                 <th className="py-4 px-6 text-emerald-600 text-center">Worker Net</th>
-                <th className="py-4 px-6 text-right">Total (₹)</th>
+                <th className="py-4 px-6 text-right">Gross Total</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">

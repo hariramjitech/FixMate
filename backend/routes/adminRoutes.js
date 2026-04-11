@@ -152,10 +152,10 @@ const getStats = async (req, res) => {
             totalUsers,
             totalWorkers,
             totalBookings,
-            totalRevenue: statsAggregation.length > 0 ? (statsAggregation[0].platformRevenue + statsAggregation[0].partsRevenue) : 0, // Keep this as gross volume
-            platformProfit: statsAggregation.length > 0 ? statsAggregation[0].platformRevenue : 0, // NEW: Just the 5% fee
-            materialsTotal: statsAggregation.length > 0 ? statsAggregation[0].partsRevenue : 0, // NEW: Just the materials
-            totalPlatformEarnings: statsAggregation.length > 0 ? statsAggregation[0].workerEarnings : 0,
+            totalRevenue: statsAggregation.length > 0 ? statsAggregation[0].totalRevenue : 0, // Gross Platform Volume
+            platformProfit: statsAggregation.length > 0 ? statsAggregation[0].platformRevenue : 0, // 5% fee profit
+            materialsTotal: statsAggregation.length > 0 ? statsAggregation[0].partsRevenue : 0, // Sub-segment: Materials
+            totalPlatformEarnings: statsAggregation.length > 0 ? statsAggregation[0].workerEarnings : 0, // Worker Net Payouts
             paymentMethodStats
         });
     } catch (error) {

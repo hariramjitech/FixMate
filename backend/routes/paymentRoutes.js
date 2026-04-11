@@ -79,6 +79,7 @@ router.post('/verify', protect, async (req, res) => {
             const booking = await Booking.findById(bookingId);
             if (booking) {
                 booking.status = 'Finished';
+                booking.paymentMethod = 'Online';
                 await booking.save();
 
                 // Emitting update

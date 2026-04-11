@@ -467,10 +467,10 @@ const WorkerDashboard = () => {
 
                           {job.status === 'Payment Pending' && (
                             <button
-                              onClick={() => changeStatus(job._id, 'Finished')}
+                              onClick={() => changeStatus(job._id, 'Finished', { paymentMethod: 'Cash' })}
                               className="w-full py-4 rounded-xl flex items-center justify-center gap-2 text-sm font-black text-white bg-emerald-600 hover:bg-emerald-700 shadow-md transition-all"
                             >
-                              <CheckCircle2 className="w-5 h-5" /> Mark Finished
+                              <CheckCircle2 className="w-5 h-5" /> Mark Cash Paid & Finish
                             </button>
                           )}
 
