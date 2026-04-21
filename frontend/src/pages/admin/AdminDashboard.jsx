@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  Search, RefreshCw, XCircle, Plus, Activity, Clock
+  Search, RefreshCw, XCircle, Plus, Activity, Clock, FileText
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
@@ -16,6 +16,7 @@ import UsersTab from './components/UsersTab';
 import BookingsTab from './components/BookingsTab';
 import ServicesTab from './components/ServicesTab';
 import RatingsTab from './components/RatingsTab';
+import ReportsTab from './components/ReportsTab';
 
 const DetailModal = ({ title, data, onClose, type, stats }) => {
   if (!data) return null;
@@ -200,6 +201,7 @@ const AdminDashboard = () => {
     { id: 'workers', label: 'Workers' },
     { id: 'users', label: 'Customers' },
     { id: 'services', label: 'Services' },
+    { id: 'reports', label: 'Reports', icon: FileText },
   ];
 
   const handleOpenDetail = (type, data) => {
@@ -274,6 +276,7 @@ const AdminDashboard = () => {
             {activeTab === 'bookings' && <BookingsTab search={search} />}
             {activeTab === 'services' && <ServicesTab search={search} onEdit={(s) => setServiceModal(s)} />}
             {activeTab === 'ratings' && <RatingsTab />}
+            {activeTab === 'reports' && <ReportsTab />}
           </div>
         </div>
 

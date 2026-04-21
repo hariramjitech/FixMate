@@ -140,11 +140,20 @@ const updateBookingStatus = async (req, res) => {
                  .populate('serviceId', 'serviceName category basePrice');
 
             if (oldStatus !== booking.status && req.io) {
+                // Notify user and worker
                 if (booking.userId) {
                     req.io.to(booking.userId.toString()).emit('bookingUpdated', populatedBooking);
                 }
                 if (booking.workerId) {
                     req.io.to(booking.workerId.toString()).emit('bookingUpdated', populatedBooking);
+                }
+
+                // Notify admin for Real-Time BI Dashboard updates
+                if (['Finished', 'Cancelled'].includes(booking.status)) {
+                    req.io.emit('BI_DATA_UPDATE', { 
+                        type: booking.status === 'Finished' ? 'TRANSACTION' : 'CANCELLATION',
+                        bookingId: booking._id
+                    });
                 }
             }
 

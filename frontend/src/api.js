@@ -85,4 +85,8 @@ export const getAdminAnalytics = ()   => api.get('/admin/analytics');
 export const getAdminReviews   = ()   => api.get('/admin/reviews');
 export const deleteAdminReview = (id) => api.delete(`/admin/reviews/${id}`);
 
+// Reports
+export const getSummaryReportData = () => api.get('/admin/reports/summary');
+export const getBookingReportData = () => api.get('/admin/reports/bookings');
+
 export default api;

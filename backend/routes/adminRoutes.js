@@ -148,15 +148,27 @@ const getStats = async (req, res) => {
             }
         ]);
 
+        // Advanced Financial Spread
+        const totalGross = statsAggregation.length > 0 ? statsAggregation[0].totalRevenue : 0;
+        const totalProfit = statsAggregation.length > 0 ? statsAggregation[0].platformRevenue : 0;
+        const totalMaterials = statsAggregation.length > 0 ? statsAggregation[0].partsRevenue : 0;
+        const totalWorkerPayouts = statsAggregation.length > 0 ? statsAggregation[0].workerEarnings : 0;
+
+        // Cancellation Diagnostics
+        const totalCancelled = await Booking.countDocuments({ status: 'Cancelled' });
+        const cancellationRate = totalBookings > 0 ? (totalCancelled / totalBookings) * 100 : 0;
+
         res.json({
             totalUsers,
             totalWorkers,
             totalBookings,
-            totalRevenue: statsAggregation.length > 0 ? statsAggregation[0].totalRevenue : 0, // Gross Platform Volume
-            platformProfit: statsAggregation.length > 0 ? statsAggregation[0].platformRevenue : 0, // 5% fee profit
-            materialsTotal: statsAggregation.length > 0 ? statsAggregation[0].partsRevenue : 0, // Sub-segment: Materials
-            totalPlatformEarnings: statsAggregation.length > 0 ? statsAggregation[0].workerEarnings : 0, // Worker Net Payouts
-            paymentMethodStats
+            totalRevenue: totalGross,
+            platformProfit: totalProfit,
+            materialsTotal: totalMaterials,
+            totalPlatformEarnings: totalWorkerPayouts,
+            paymentMethodStats,
+            totalCancelled,
+            cancellationRate
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -248,14 +260,16 @@ const getAnalytics = async (req, res) => {
             { $sort: { count: -1 } }
         ]);
 
-        // 3. Top Workers
+        // 3. Top Workers with Efficiency Math
         const workerStats = await Booking.aggregate([
             { $match: { status: 'Finished' } },
             {
                 $group: {
                     _id: '$workerId',
                     earnings: { $sum: '$workerEarnings' },
-                    jobs: { $sum: 1 }
+                    jobs: { $sum: 1 },
+                    // Calculate avg time in hours (Finish - Accepted)
+                    avgCompletionTime: { $avg: { $divide: [{ $subtract: ['$updatedAt', '$createdAt'] }, 3600000] } }
                 }
             },
             {
@@ -271,10 +285,75 @@ const getAnalytics = async (req, res) => {
             { $limit: 5 }
         ]);
 
+        // 4. Cancellation by Service (Revenue Leakage)
+        const leakageStats = await Booking.aggregate([
+            { $match: { status: 'Cancelled' } },
+            {
+                $group: {
+                    _id: '$serviceId',
+                    cancelledCount: { $sum: 1 },
+                    lostRevenue: { $sum: '$estimatedPrice' }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'services',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'service'
+                }
+            },
+            { $unwind: '$service' }
+        ]);
+
+        // 5. Growth Math (MoM)
+        const lastMonth = new Date();
+        lastMonth.setMonth(lastMonth.getMonth() - 1);
+        const thisMonthRevenue = monthlyStats.find(s => s._id.month === new Date().getMonth() + 1)?.revenue || 0;
+        const prevMonthRevenue = monthlyStats.find(s => s._id.month === new Date().getMonth())?.revenue || 0;
+        const revenueGrowth = prevMonthRevenue > 0 ? ((thisMonthRevenue - prevMonthRevenue) / prevMonthRevenue) * 100 : 0;
+
+        // 5. Daily Revenue Velocity (Last 30 Days)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const dailyStats = await Booking.aggregate([
+            { $match: { status: 'Finished', createdAt: { $gte: thirtyDaysAgo } } },
+            {
+                $group: {
+                    _id: {
+                        day: { $dayOfMonth: '$createdAt' },
+                        month: { $month: '$createdAt' },
+                        year: { $year: '$createdAt' }
+                    },
+                    revenue: { $sum: '$finalPrice' },
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 } }
+        ]);
+
+        // 6. Geographic Distribution (Top Locations)
+        const locationStats = await Booking.aggregate([
+            { $match: { status: 'Finished' } },
+            {
+                $group: {
+                    _id: '$location.address',
+                    count: { $sum: 1 },
+                    revenue: { $sum: '$finalPrice' }
+                }
+            },
+            { $sort: { count: -1 } },
+            { $limit: 10 }
+        ]);
+
         res.json({
             monthlyStats,
+            dailyStats,
             serviceStats,
-            workerStats
+            workerStats,
+            leakageStats,
+            revenueGrowth,
+            locationStats
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
