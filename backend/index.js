@@ -24,6 +24,35 @@ const paymentRoutes = require('./routes/paymentRoutes');
 // Connect to database
 connectDB();
 
+// Ensure default admin exists automatically
+const { User } = require('./models');
+const ensureAdmin = async () => {
+    try {
+        const adminEmail = 'admin@fixmate.com';
+        const exists = await User.findOne({ email: adminEmail });
+        if (exists) {
+            if (exists.password !== 'Admin@1234') {
+                exists.password = 'Admin@1234';
+                await exists.save();
+                console.log('Admin password reset to default.');
+            }
+        } else {
+            await User.create({
+                name: 'FixMate Admin',
+                email: adminEmail,
+                phone: '9000000000',
+                password: 'Admin@1234',
+                address: 'FixMate HQ',
+                role: 'admin',
+            });
+            console.log('Default Admin created.');
+        }
+    } catch (e) {
+        console.error('Error ensuring admin:', e);
+    }
+};
+ensureAdmin();
+
 const app = express();
 const server = http.createServer(app);
 
