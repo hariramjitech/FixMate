@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
 
   // Set default axios base URL
-  axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+  axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || '/api';
 
   // Sync auth header whenever user changes
   useEffect(() => {
@@ -61,7 +61,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (user) {
-      const serverUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+      const serverUrl = import.meta.env.VITE_SOCKET_URL || 'http://100.31.66.227';
       const newSocket = io(serverUrl, {
         auth: { token: user.token }
       });
