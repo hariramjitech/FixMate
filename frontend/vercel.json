@@ -5,6 +5,10 @@
       "destination": "http://100.31.66.227/api/$1"
     },
     {
+      "source": "/socket.io/(.*)",
+      "destination": "http://100.31.66.227/socket.io/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

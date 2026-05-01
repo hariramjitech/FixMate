@@ -61,9 +61,13 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (user) {
-      const serverUrl = import.meta.env.VITE_SOCKET_URL || 'http://100.31.66.227';
+      // Use relative URL on Vercel to route through the vercel.json proxy and avoid Mixed Content
+      const isDev = import.meta.env.DEV;
+      const serverUrl = import.meta.env.VITE_SOCKET_URL || (isDev ? 'http://100.31.66.227' : '');
+      
       const newSocket = io(serverUrl, {
-        auth: { token: user.token }
+        auth: { token: user.token },
+        transports: isDev ? ['polling', 'websocket'] : ['polling'] // Vercel edge doesn't support WebSocket upgrade
       });
       
       newSocket.on('connect', () => {
