@@ -2,11 +2,11 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://fix-mate-q3ab.vercel.app/api/$1"
+      "destination": "https://fix-mate-p49b.vercel.app/api/$1"
     },
     {
       "source": "/socket.io/(.*)",
-      "destination": "https://fix-mate-q3ab.vercel.app/socket.io/$1"
+      "destination": "https://fix-mate-p49b.vercel.app/socket.io/$1"
     },
     {
       "source": "/(.*)",
@@ -14,4 +14,5 @@
     }
   ]
 }
+
 

@@ -3,8 +3,12 @@ dotenv.config();
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const dns = require('dns');
-dns.setServers(['8.8.8.8', '8.8.4.4']);
+try {
+    const dns = require('dns');
+    dns.setServers(['8.8.8.8', '8.8.4.4']);
+} catch (e) {
+    // Ignore DNS override errors in serverless containers
+}
 const cors = require('cors');
 const morgan = require('morgan');
 const connectDB = require('./config');
@@ -18,15 +22,14 @@ const reportRoutes = require('./routes/reportRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 
-// Load environment variables
-// Already loaded at the top
-
-// Connect to database
-connectDB();
+// Connect to database in background
+connectDB().catch(err => console.error('Initial DB connect error:', err));
 
 // Ensure default admin exists automatically
 const { User } = require('./models');
+let adminCreated = false;
 const ensureAdmin = async () => {
+    if (adminCreated) return;
     try {
         const adminEmail = 'admin@fixmate.com';
         const exists = await User.findOne({ email: adminEmail });
@@ -47,11 +50,11 @@ const ensureAdmin = async () => {
             });
             console.log('Default Admin created.');
         }
+        adminCreated = true;
     } catch (e) {
-        console.error('Error ensuring admin:', e);
+        console.error('Error ensuring admin:', e.message);
     }
 };
-ensureAdmin();
 
 const app = express();
 const server = http.createServer(app);
@@ -80,13 +83,14 @@ app.use(express.json());
 app.use(cors());
 app.use(morgan('dev'));
 
-// Logger for requests
-app.use((req, res, next) => {
-    logger.debug(`${req.method} ${req.url}`);
-    // Inject io into request to use it in routes
+// Ensure DB connected on each request
+app.use(async (req, res, next) => {
+    await connectDB();
+    ensureAdmin().catch(() => {});
     req.io = io;
     next();
 });
+
 
 // Routes
 app.use('/api/auth', authRoutes);

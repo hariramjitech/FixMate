@@ -1,19 +1,44 @@
 const mongoose = require('mongoose');
 
+let cached = global.mongoose;
+
+if (!cached) {
+    cached = global.mongoose = { conn: null, promise: null };
+}
+
 const connectDB = async () => {
-    try {
-        if (!process.env.MONGO_URI) {
-            throw new Error('MONGO_URI is not defined in .env file');
-        }
-        console.log('Attempting to connect to MongoDB...');
-        const conn = await mongoose.connect(process.env.MONGO_URI, {
-            family: 4 // Force IPv4 to avoid potential IPv6 DNS resolution issues
-        });
-        console.log(`MongoDB Connected: ${conn.connection.host}`);
-    } catch (error) {
-        console.error(`Error: ${error.message}`);
-        process.exit(1);
+    if (cached.conn) {
+        return cached.conn;
     }
+
+    if (!process.env.MONGO_URI) {
+        console.error('MONGO_URI is not defined in environment variables');
+        return null;
+    }
+
+    if (!cached.promise) {
+        const opts = {
+            bufferCommands: false,
+            family: 4, // Force IPv4
+            serverSelectionTimeoutMS: 8000,
+        };
+
+        cached.promise = mongoose.connect(process.env.MONGO_URI, opts).then((m) => {
+            console.log(`MongoDB Connected: ${m.connection.host}`);
+            return m;
+        }).catch((err) => {
+            console.error(`MongoDB Connection Error: ${err.message}`);
+            cached.promise = null;
+            if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+                process.exit(1);
+            }
+            return null;
+        });
+    }
+
+    cached.conn = await cached.promise;
+    return cached.conn;
 };
 
 module.exports = connectDB;
+
