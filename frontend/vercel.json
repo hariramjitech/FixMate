@@ -2,15 +2,15 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "http://52.91.155.216/api/$1"
+      "destination": "https://fix-mate-74j8.vercel.app/api/$1"
     },
     {
       "source": "/socket.io/(.*)",
-      "destination": "http://52.91.155.216/socket.io/$1"
+      "destination": "https://fix-mate-74j8.vercel.app/socket.io/$1"
     },
     {
       "source": "/(.*)",
       "destination": "/index.html"
     }
   ]
-}
+}
